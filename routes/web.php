@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CartController as AdminCartController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -103,6 +105,13 @@ Route::middleware(['auth', 'role:admin'])
 
         // Coupon Management
         Route::resource('coupons', CouponController::class);
+
+        // Settings Management
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+        // Activity Logs Management
+        Route::get('/activity_logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
     });
 
 require __DIR__ . '/auth.php';

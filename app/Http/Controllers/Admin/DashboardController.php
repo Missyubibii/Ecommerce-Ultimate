@@ -3,32 +3,45 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\DashboardService;
 use Illuminate\Http\Request;
-use App\Models\User;
 
 class DashboardController extends Controller
 {
+    protected $dashboardService;
+
+    public function __construct(DashboardService $dashboardService)
+    {
+        $this->dashboardService = $dashboardService;
+    }
+
     public function index(Request $request)
     {
-
-        $stats = [
-            'total_users' => User::count(),
-            'new_users_today' => User::whereDate('created_at', today())->count(),
-            // Placeholder cho Orders/Products sau này
-            'total_orders' => 0,
-            'revenue' => 0,
-        ];
+        $stats = $this->dashboardService->getStats();
+        $recentOrders = $this->dashboardService->getRecentOrders();
+        $chartData = $this->dashboardService->getRevenueChartData();
 
         $debug = [
             'module' => 'AdminDashboard',
-            'action' => 'Index',
+            'action' => 'View',
             'stats' => $stats
         ];
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'data' => $stats, 'debug' => $debug]);
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+                'recent_orders' => $recentOrders,
+                'chart' => $chartData,
+                'debug' => $debug
+            ]);
         }
 
-        return view('admin.dashboard', ['stats' => $stats, 'server_debug' => $debug]);
+        return view('admin.dashboard', [
+            'stats' => $stats,
+            'recentOrders' => $recentOrders,
+            'chartData' => $chartData,
+            'server_debug' => $debug
+        ]);
     }
 }

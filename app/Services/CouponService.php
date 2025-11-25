@@ -44,7 +44,8 @@ class CouponService
         if (!$coupon->isValid($cartTotal)) {
             // Ném ra lý do cụ thể thì tốt hơn, nhưng đơn giản hóa:
             if ($cartTotal < $coupon->min_order_amount) {
-                throw new Exception("Đơn hàng phải tối thiểu " . number_format($coupon->min_order_amount) . "đ để sử dụng mã này.");
+                $min = $coupon->min_order_amount ?? 0;
+                throw new Exception("Đơn hàng phải tối thiểu " . number_format((float)$min, 0, ',', '.') . "đ để sử dụng mã này.");
             }
             throw new Exception("Mã giảm giá đã hết hạn hoặc không hợp lệ.");
         }
