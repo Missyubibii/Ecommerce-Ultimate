@@ -9,6 +9,7 @@ use App\Services\CategoryService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller implements HasMiddleware
 {
@@ -57,54 +58,68 @@ class ProductController extends Controller implements HasMiddleware
     public function create()
     {
         $categories = $this->categoryService->getAllFlat();
+        // $brands = DB::table('brands')->get();
         return view('admin.products.create', ['categories' => $categories]);
     }
 
     public function store(Request $request)
     {
+        // 1. Validation (Bao gồm các trường JSON string)
         $request->validate([
             'name' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'category_ids' => 'required|array',
+            'category_ids.*' => 'exists:categories,id', // Multi-select
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
-            'sku' => 'nullable|string|unique:products,sku',
+            'specifications' => 'nullable|string',
+            'stock_locations' => 'nullable|string',
             'image' => 'nullable|image|max:2048',
             'gallery.*' => 'image|max:2048',
-            'short_description' => 'nullable|string|max:500',
-            'specs' => 'nullable|array',
-            'specs.*.key' => 'required_with:specs.*.value|string',
-            'specs.*.value' => 'required_with:specs.*.key|string',
+            'brand_id' => 'nullable|exists:brands,id',
         ]);
 
-        // 1. Lấy dữ liệu cơ bản
         $data = $request->all();
+        $categoryIds = $request->category_ids ?? [];
 
-        // 2. Xử lý Metadata (Thông số kỹ thuật)
-        if ($request->has('specs')) {
-            $validSpecs = collect($request->specs)
-                ->filter(fn($item) => !empty($item['key']) && !empty($item['value']))
-                ->values()
-                ->toArray();
-
-            $data['metadata'] = ['specs' => $validSpecs];
+        // 2. Xử lý JSON Strings (Specifications)
+        if ($request->has('specifications')) {
+            $specs = json_decode($request->specifications, true);
+            $data['metadata'] = ['specifications' => $specs];
+            unset($data['specifications']);
         }
 
-        // 3. Gọi Service với biến $data đã xử lý (FIXED HERE)
-        $product = $this->productService->create($data);
+        // 3. Xử lý JSON Strings (Stock Locations)
+        if ($request->has('stock_locations')) {
+            $data['stock_locations'] = json_decode($request->stock_locations, true);
+        }
+
+        // 4. Xử lý các trường boolean (Gán giá trị boolean)
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_featured'] = $request->boolean('is_featured');
+        $data['special_offer'] = $request->boolean('special_offer');
+        $data['online_only'] = $request->boolean('online_only');
+
+
+        // 5. Gọi Service
+        $product = $this->productService->create($data, $categoryIds);
 
         $debug = ['module' => 'Product', 'action' => 'Create', 'id' => $product->id];
 
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'data' => $product, 'debug' => $debug]);
-        }
-
-        return redirect()->route('admin.products.index')->with('status', 'Product created!')->with('server_debug', $debug);
+        // Trả JSON vì Frontend dùng AJAX
+        return response()->json(['success' => true, 'id' => $product->id, 'debug' => $debug]);
     }
 
     public function edit(Product $product)
     {
         $categories = $this->categoryService->getAllFlat();
-        return view('admin.products.edit', ['product' => $product, 'categories' => $categories]);
+        // $brands = DB::table('brands')->get();
+        $product->load('categories');
+
+        return view('admin.products.edit', [
+            'product' => $product,
+            'categories' => $categories,
+            // 'brands' => $brands
+        ]);
     }
 
     public function update(Request $request, Product $product)
@@ -112,6 +127,7 @@ class ProductController extends Controller implements HasMiddleware
         $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'category_ids.*' => 'exists:categories,id',
             'price' => 'required|numeric|min:0',
             'sku' => 'required|string|unique:products,sku,' . $product->id,
             'image' => 'nullable|image|max:2048',
@@ -123,8 +139,27 @@ class ProductController extends Controller implements HasMiddleware
 
         // 1. Lấy dữ liệu cơ bản
         $data = $request->all();
+        $categoryIds = $request->category_ids ?? [];
 
-        // 2. Xử lý Metadata (Tương tự store)
+        // 1. Xử lý JSON Strings (Specifications)
+        if ($request->has('specifications')) {
+            $specs = json_decode($request->specifications, true);
+            $data['metadata'] = ['specifications' => $specs];
+            unset($data['specifications']);
+        }
+
+        // 2. Xử lý Stock Locations
+        if ($request->has('stock_locations')) {
+            $data['stock_locations'] = json_decode($request->stock_locations, true);
+        }
+
+        // 3. Xử lý booleans
+        $data['is_active'] = $request->boolean('is_active');
+        $data['is_featured'] = $request->boolean('is_featured');
+        $data['special_offer'] = $request->boolean('special_offer');
+        $data['online_only'] = $request->boolean('online_only');
+
+        // 4. Xử lý Metadata (Tương tự store)
         if ($request->has('specs')) {
             $validSpecs = collect($request->specs)
                 ->filter(fn($item) => !empty($item['key']) && !empty($item['value']))
@@ -138,7 +173,7 @@ class ProductController extends Controller implements HasMiddleware
         }
 
         // 3. Gọi Service với $data (FIXED HERE)
-        $updated = $this->productService->update($product, $data);
+        $updated = $this->productService->update($product, $data, $categoryIds);
 
         $debug = ['module' => 'Product', 'action' => 'Update', 'id' => $product->id];
 

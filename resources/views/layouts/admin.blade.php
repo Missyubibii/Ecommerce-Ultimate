@@ -74,6 +74,8 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     {{-- REQUIRED: SERVER RESPONSE DEBUG SCRIPT --}}
     @if(session()->has('server_debug') || isset($server_debug))
         @php $debug = session('server_debug') ?? $server_debug; @endphp

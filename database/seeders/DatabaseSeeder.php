@@ -53,5 +53,10 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create()->each(function ($u) use ($roleCustomer) {
         //     $u->assignRole($roleCustomer);
         // });
+
+        $this->call(CategorySeeder::class);
+
+        // 3. Chạy Product Seeder (Tạo sản phẩm gắn vào ID 21-40)
+        $this->call(RealProductSeeder::class);
     }
 }

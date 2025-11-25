@@ -2,9 +2,14 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\CartController as AdminCartController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,9 +18,16 @@ use Illuminate\Support\Facades\Route;
 | 1. PUBLIC ROUTES (GUEST + USER) - MODULE L
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', function () {
     return view('welcome'); // Trang chủ Frontend (Homepage)
 })->name('home');
+
+// Cart Routes
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
+Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +51,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{address}', [AddressController::class, 'destroy'])->name('destroy');
         Route::patch('/{address}/default', [AddressController::class, 'setDefault'])->name('set-default');
     });
+
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/place-order', [CheckoutController::class, 'store'])->name('order.place');
+    Route::get('/checkout/thankyou/{id}', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
 });
 
 /*
@@ -68,6 +84,25 @@ Route::middleware(['auth', 'role:admin'])
         // Product Management
         Route::resource('products', ProductController::class);
         Route::patch('products/{product}/reorder-images', [ProductController::class, 'reorderImages'])->name('products.reorderImages');
+
+        // Cart Management
+        Route::get('/carts', [AdminCartController::class, 'index'])->name('carts.index');
+        Route::get('/carts/detail', [AdminCartController::class, 'show'])->name('carts.show');
+        Route::delete('/carts/clear', [AdminCartController::class, 'destroy'])->name('carts.destroy');
+
+        // Order Management
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+        Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
+
+        // Payment Management
+        Route::put('/payments/{id}', [OrderController::class, 'updatePayment'])->name('orders.update_payment');
+
+        // Shipment Management
+        Route::put('/shipments/{id}', [OrderController::class, 'updateShipment'])->name('orders.update_shipment');
+
+        // Coupon Management
+        Route::resource('coupons', CouponController::class);
     });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
