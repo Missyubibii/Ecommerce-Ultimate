@@ -1,100 +1,108 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+{{-- 1. Top Banner (Swiper) --}}
+<div class="relative bg-gray-900 h-10 overflow-hidden">
+    <div class="swiper-container h-full" id="top-banner-swiper">
+        <div class="swiper-wrapper">
+            @forelse($headerBanners ?? [] as $banner)
+                <div class="swiper-slide flex items-center justify-center text-xs font-medium text-white tracking-wide">
+                    <a href="{{ $banner->url ?? '#' }}" class="flex items-center gap-2 w-full h-full justify-center hover:text-indigo-300 transition">
+                        @if($banner->image_url)
+                            <img src="{{ $banner->image_url }}" alt="" class="h-full object-cover opacity-50 hover:opacity-100 w-full absolute inset-0 z-0">
+                        @endif
+                        <span class="relative z-10">{{ $banner->title ?? 'Welcome to our store' }}</span>
                     </a>
                 </div>
-
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+            @empty
+                <div class="swiper-slide flex items-center justify-center text-xs text-white">
+                    Chào mừng đến với {{ config('app.name') }}
                 </div>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+{{-- 2. Marquee Links --}}
+<div class="bg-indigo-50 border-b border-indigo-100 h-10 flex items-center overflow-hidden">
+    <div class="container mx-auto px-4 relative w-full h-full flex items-center">
+        <div class="w-full overflow-hidden">
+            <div class="animate-marquee inline-block pl-full">
+                <span class="inline-flex items-center gap-8 text-sm font-medium text-indigo-800">
+                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i> Flash Sale: Giảm 50% màn hình!</a>
+                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="truck" class="w-4 h-4 text-blue-500"></i> Freeship đơn từ 500k</a>
+                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i> Bảo hành chính hãng 24 tháng</a>
+                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="gift" class="w-4 h-4 text-red-500"></i> Quà tặng trị giá 1 triệu đồng</a>
+                </span>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+{{-- 3. Main Header --}}
+<header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
 
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
+        {{-- Logo --}}
+        <a href="{{ route('home') }}" class="flex items-center gap-2 group">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xl font-bold text-gray-900 leading-none tracking-tight">ULTIMATE</span>
+                <span class="text-xs font-medium text-indigo-600 tracking-widest">STORE</span>
+            </div>
+        </a>
 
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+        {{-- Search Bar
+        <div class="hidden md:block flex-1 max-w-2xl">
+            <form action="{{ route('search.results') }}" method="GET" class="relative group">
+                <input type="text" name="q" placeholder="Tìm kiếm sản phẩm, thương hiệu..."
+                    class="w-full bg-gray-50 text-gray-900 border border-gray-200 rounded-full py-2.5 pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm">
+                <button type="submit" class="absolute right-1 top-1 bottom-1 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors shadow-md">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div> --}}
 
-                        <!-- Authentication -->
+        {{-- Actions --}}
+        <div class="flex items-center gap-2 sm:gap-4">
+
+            {{-- Cart --}}
+            <a href="{{ route('cart.index') }}" class="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors group">
+                <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                {{-- Demo Badge --}}
+                <span class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-white transform group-hover:scale-110 transition-transform">2</span>
+            </a>
+
+            {{-- User Dropdown (Alpine) --}}
+            <div class="relative" x-data="{ open: false }">
+                @auth
+                    <button @click="open = !open" class="flex items-center gap-2 p-1 pr-3 rounded-full border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all">
+                        <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff" alt="Avatar" class="w-8 h-8 rounded-full">
+                        <span class="text-sm font-medium text-gray-700 hidden sm:block max-w-[100px] truncate">{{ Auth::user()->name }}</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+                        <div class="px-4 py-2 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+                            <p class="text-xs text-gray-500">Xin chào,</p>
+                            <p class="text-sm font-bold text-gray-800 truncate">{{ Auth::user()->name }}</p>
+                        </div>
+                        @if(Auth::user()->hasRole('admin'))
+                            <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">Trang quản trị</a>
+                        @endif
+                        <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">Hồ sơ cá nhân</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
+                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Đăng xuất</button>
                         </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                    </div>
+                @else
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('login') }}" class="text-sm font-semibold text-gray-600 hover:text-indigo-600 transition">Đăng nhập</a>
+                        <span class="h-4 w-px bg-gray-300"></span>
+                        <a href="{{ route('register') }}" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-full shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg transition-all">Đăng ký</a>
+                    </div>
+                @endauth
             </div>
         </div>
     </div>
-
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-        </div>
-
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
-        </div>
-    </div>
-</nav>
+</header>

@@ -30,6 +30,11 @@
                 'route' => 'admin.users.index'
             ],
             [
+                'name' => 'Banner',
+                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v8H4z"></path><path d="M4 16h16v4H4z"></path></svg>',
+                'route' => 'admin.banners.index'
+            ],
+            [
                 'name' => 'Danh mục (Category)',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>',
                 'route' => 'admin.categories.index'
@@ -70,10 +75,10 @@
     <nav class="flex-1 overflow-y-auto mt-4 px-2 space-y-1">
         @foreach ($menu as $item)
             <a href="{{ route($item['route']) }}" class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md
-                                    {{ request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*')
+                                        {{ request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*')
             ? 'bg-indigo-50 text-indigo-700'
             : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}
-                                    transition-colors duration-150" :class="expanded ? '' : 'justify-center'"
+                                        transition-colors duration-150" :class="expanded ? '' : 'justify-center'"
                 :title="expanded ? '' : '{{ $item['name'] }}'">
 
                 <div class="flex-shrink-0">{!! $item['icon'] !!}</div>

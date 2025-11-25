@@ -7,7 +7,12 @@ use Illuminate\Support\Str;
 
 class ProductImage extends Model
 {
-    protected $fillable = ['product_id', 'path', 'alt', 'sort_order'];
+    protected $fillable = [
+        'product_id',
+        'path',
+        'alt',
+        'sort_order'
+    ];
 
     public function product()
     {

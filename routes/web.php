@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,9 +23,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('welcome'); // Trang chủ Frontend (Homepage)
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Cart Routes
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -38,9 +38,9 @@ Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard của khách hàng
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/home', function () {
+        return view('home');
+    })->name('home');
 
     // Quản lý Profile & Address
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -112,6 +112,9 @@ Route::middleware(['auth', 'role:admin'])
 
         // Activity Logs Management
         Route::get('/activity_logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
+
+        // Banner Management
+        Route::resource('banners', BannerController::class);
     });
 
 require __DIR__ . '/auth.php';
