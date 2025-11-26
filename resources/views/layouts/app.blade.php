@@ -115,6 +115,11 @@
         {{--
     </div> --}}
 
+    {{-- JS cho Homepage Slide --}}
+    @if (Route::is('home'))
+        <script src="{{ asset('js/homepage.js') }}"></script>
+    @endif
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -140,5 +145,54 @@
             })();
         </script>
     @endif
+
+    {{-- Component Toast --}}
+    <x-toast />
+
+    {{-- Script để lắng nghe Flash Message từ Session PHP --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Profile & Account Updates
+            @if (session('status') === 'profile-updated')
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: 'Cập nhật hồ sơ thành công!', type: 'success' }
+                }));
+            @endif
+
+            @if (session('status') === 'password-updated')
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: 'Đổi mật khẩu thành công!', type: 'success' }
+                }));
+            @endif
+
+            @if (session('status') === 'avatar-updated')
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: 'Cập nhật ảnh đại diện thành công!', type: 'success' }
+                }));
+            @endif
+
+            // 2. General Success Messages (e.g. Order success, Cart actions)
+            @if (session('success'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: "{{ session('success') }}", type: 'success' }
+                }));
+            @endif
+
+            // 3. General Error Messages
+            @if (session('error'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: "{{ session('error') }}", type: 'error' }
+                }));
+            @endif
+
+            // 4. Validation Errors (Optional: Show first error as toast)
+            @if ($errors->any())
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: "{{ $errors->first() }}", type: 'error' }
+                }));
+            @endif
+        });
+    </script>
 </body>
+
 </html>

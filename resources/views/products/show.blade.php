@@ -69,7 +69,8 @@
                                 @endif
                             </div>
                             <p class="text-gray-600 leading-relaxed">
-                                {{ $product['short_description'] ?? 'Đang cập nhật mô tả...' }}</p>
+                                {{ $product['short_description'] ?? 'Đang cập nhật mô tả...' }}
+                            </p>
                         </div>
 
                         {{-- Add to Cart Actions --}}
@@ -159,19 +160,36 @@
                 product: productData,
                 currentImage: productData.image_url,
                 quantity: 1,
+                isAdding: false,
 
                 async addToCart() {
+                    if (this.isAdding) return;
+                    this.isAdding = true;
+
                     try {
                         const res = await axios.post('{{ route("cart.add") }}', {
                             product_id: this.product.id,
                             quantity: this.quantity
                         });
+
                         if (res.data.success) {
-                            alert('Đã thêm vào giỏ hàng thành công!');
-                            window.location.reload();
+                            // Toast
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { message: 'Đã thêm sản phẩm vào giỏ hàng thành công!', type: 'success' }
+                            }));
+
+                            // Update Badge
+                            window.dispatchEvent(new CustomEvent('cart-updated', {
+                                detail: { count: res.data.cart_count }
+                            }));
                         }
                     } catch (e) {
-                        alert('Lỗi: ' + (e.response?.data?.message || 'Không thể thêm vào giỏ'));
+                        let msg = e.response?.data?.message || 'Không thể thêm vào giỏ';
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: { message: 'Lỗi: ' + msg, type: 'error' }
+                        }));
+                    } finally {
+                        this.isAdding = false;
                     }
                 }
             }

@@ -190,13 +190,23 @@
                             product_id: productId,
                             quantity: 1
                         });
+
                         if (res.data.success) {
-                            alert('Đã thêm sản phẩm vào giỏ hàng!');
-                            // Reload trang để update số lượng trên header (hoặc dùng event bus)
-                            window.location.reload();
+                            // 1. Thông báo Toast
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { message: 'Đã thêm sản phẩm vào giỏ hàng!', type: 'success' }
+                            }));
+
+                            // 2. Cập nhật Badge giỏ hàng (Thay vì reload)
+                            window.dispatchEvent(new CustomEvent('cart-updated', {
+                                detail: { count: res.data.cart_count }
+                            }));
                         }
                     } catch (e) {
-                        alert('Lỗi: ' + (e.response?.data?.message || 'Không thể thêm vào giỏ'));
+                        let msg = e.response?.data?.message || 'Không thể thêm vào giỏ';
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: { message: 'Lỗi: ' + msg, type: 'error' }
+                        }));
                     }
                 },
 

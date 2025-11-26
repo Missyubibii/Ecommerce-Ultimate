@@ -62,6 +62,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{address}', [AddressController::class, 'destroy'])->name('destroy');
         Route::patch('/{address}/default', [AddressController::class, 'setDefault'])->name('set-default');
     });
+
+    // Quản lý Đơn hàng của khách hàng
+    Route::prefix('customer/orders')->name('customer.orders.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CustomerOrderController::class, 'index'])->name('index');
+        Route::get('/{id}', [\App\Http\Controllers\CustomerOrderController::class, 'show'])->name('show');
+        Route::post('/{id}/cancel', [\App\Http\Controllers\CustomerOrderController::class, 'cancel'])->name('cancel');
+    });
 });
 
 /*

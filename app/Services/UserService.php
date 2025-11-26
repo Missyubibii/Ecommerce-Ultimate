@@ -14,11 +14,14 @@ class UserService
      * Update user profile
      */
     public function updateProfile(User $user, array $data): User
-    {
-        $user->fill(collect($data)->only(['name', 'phone', 'avatar'])->toArray());
-        $user->save();
-        return $user->fresh();
-    }
+{
+    $fillableData = collect($data)->only(['name', 'email', 'phone', 'avatar'])->toArray();
+
+    $user->fill($fillableData);
+    $user->save();
+
+    return $user; 
+}
 
     /**
      * Update user password

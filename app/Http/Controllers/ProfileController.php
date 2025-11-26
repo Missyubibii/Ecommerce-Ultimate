@@ -60,37 +60,27 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request)
     {
         $user = $request->user();
+
+        // 1. Lấy dữ liệu đã validate (chỉ gồm name, email, phone)
         $data = $request->validated();
 
-        // Logic reset email verification nếu đổi email (giữ lại từ Breeze)
+        // 2. Xử lý Avatar riêng (vì avatar có thể nullable trong validate nhưng có file gửi lên)
+        if ($request->hasFile('avatar')) {
+            $path = $this->userService->uploadAvatar($user, $request->file('avatar'));
+
+            // Gán đường dẫn vào mảng data để update
+            $data['avatar'] = $path;
+        }
+
+        // 3. Reset email verification nếu đổi email
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
 
-        // Xử lý upload Avatar trước khi gọi Service update info
-        if ($request->hasFile('avatar')) {
-            // Gọi hàm uploadAvatar trong service để lấy path
-            $path = $this->userService->uploadAvatar($user, $request->file('avatar'));
-            $data['avatar'] = $path;
-        }
+        // 4. Gọi Service update
+        $this->userService->updateProfile($user, $data);
 
-        $updatedUser = $this->userService->updateProfile($user, $data);
-
-        // Debug Data
-        $debug = [
-            'module' => 'User',
-            'action' => 'UpdateProfile',
-            'changes' => $updatedUser->getChanges() // Track changes
-        ];
-
-        // Hybrid Response
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'data' => $updatedUser, 'debug' => $debug]);
-        }
-
-        return Redirect::route('profile.edit')
-            ->with('status', 'profile-updated')
-            ->with('server_debug', $debug);
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**

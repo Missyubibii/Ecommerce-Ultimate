@@ -134,11 +134,19 @@
                             quantity: 1
                         });
                         if (res.data.success) {
-                            alert('Đã thêm vào giỏ hàng!');
-                            window.location.reload();
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { message: 'Đã thêm vào giỏ hàng!', type: 'success' }
+                            }));
+
+                            window.dispatchEvent(new CustomEvent('cart-updated', {
+                                detail: { count: res.data.cart_count }
+                            }));
                         }
                     } catch (e) {
-                        alert('Lỗi: ' + (e.response?.data?.message || 'Có lỗi xảy ra'));
+                        let msg = e.response?.data?.message || 'Có lỗi xảy ra';
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: { message: 'Lỗi: ' + msg, type: 'error' }
+                        }));
                     }
                 }
             }

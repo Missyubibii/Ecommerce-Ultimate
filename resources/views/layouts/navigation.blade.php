@@ -80,16 +80,24 @@
 
                 {{-- Cart --}}
                 <a href="{{ route('cart.index') }}"
-                    class="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors group">
+                    class="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors group"
+                    x-data="{
+                        count: {{ $cartCount ?? 0 }},
+                        updateCount(event) {
+                            this.count = event.detail.count;
+                            // Hiệu ứng rung lắc nhẹ khi cập nhật
+                            this.$el.classList.add('animate-bounce');
+                            setTimeout(() => this.$el.classList.remove('animate-bounce'), 1000);
+                        }
+                    }" @cart-updated.window="updateCount($event)">
                     <i data-lucide="shopping-cart" class="w-6 h-6"></i>
 
-                    {{-- Chỉ hiện badge nếu có hàng --}}
-                    @if(isset($cartCount) && $cartCount > 0)
-                        <span
-                            class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-white transform group-hover:scale-110 transition-transform">
-                            {{ $cartCount > 99 ? '99+' : $cartCount }}
-                        </span>
-                    @endif
+                    <span x-show="count > 0" x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 scale-50" x-transition:enter-end="opacity-100 scale-100"
+                        class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-white transform group-hover:scale-110 transition-transform"
+                        x-text="count > 99 ? '99+' : count">
+                        {{ ($cartCount ?? 0) > 99 ? '99+' : ($cartCount ?? 0) }}
+                    </span>
                 </a>
 
                 {{-- User Dropdown --}}
@@ -97,8 +105,15 @@
                     @auth
                         <button @click="open = !open"
                             class="flex items-center gap-2 p-1 pr-3 rounded-full border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all">
-                            <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff"
-                                alt="Avatar" class="w-8 h-8 rounded-full">
+                            @if(Auth::user()->avatar)
+                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}"
+                                    class="w-8 h-8 rounded-full object-cover border border-gray-200">
+                            @else
+                                <div
+                                    class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs border border-indigo-200">
+                                    {{ substr(Auth::user()->name, 0, 1) }}
+                                </div>
+                            @endif
                             <span class="text-sm font-medium text-gray-700 hidden sm:block max-w-[100px] truncate">
                                 {{ Auth::user()->name }}
                             </span>
@@ -120,6 +135,9 @@
                             <a href="{{ route('profile.edit') }}"
                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">Hồ sơ
                                 cá nhân</a>
+                            <a href="{{ route('customer.orders.index') }}"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">Đơn
+                                hàng</a>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"
