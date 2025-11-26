@@ -115,11 +115,6 @@
         {{--
     </div> --}}
 
-    {{-- JS cho Homepage Slide --}}
-    @if (Route::is('home'))
-        <script src="{{ asset('js/homepage.js') }}"></script>
-    @endif
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();

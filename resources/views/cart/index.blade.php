@@ -1,6 +1,9 @@
-<x-app-layout>
+@extends('layouts.app')
+
+@section('title', 'Giỏ hàng của bạn')
+
+@section('content')
     <div class="container mx-auto px-4 py-8" x-data="cartHandler()">
-        <h1 class="text-3xl font-bold mb-6">Giỏ hàng của bạn</h1>
 
         <div x-show="isLoading" class="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
@@ -121,4 +124,4 @@
             }
         }
     </script>
-</x-app-layout>
+@endsection

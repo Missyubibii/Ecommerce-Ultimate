@@ -50,22 +50,40 @@ class CheckoutController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validate Input
-        $request->validate([
-            'payment_method' => 'required|in:cod,banking',
-            'address_id' => 'nullable|exists:addresses,id',
-            'new_address.full_name' => 'required_without:address_id',
-            'new_address.phone' => 'required_without:address_id',
-            'new_address.address_line1' => 'required_without:address_id',
-        ]);
-
         $user = Auth::user();
 
-        try {
-            // 2. Gọi Service xử lý
-            $order = $this->orderService->placeOrder($user, $request->all());
+        // 1. Validate Dynamic
+        $rules = [
+            'payment_method' => 'required|in:cod,banking',
+            'address_id' => 'nullable|exists:addresses,id',
+        ];
 
-            // 3. Chuẩn bị Debug Data
+        // Nếu là Guest hoặc User chọn "Địa chỉ mới", bắt buộc nhập thông tin
+        if (!$user || !$request->input('address_id')) {
+            $rules['new_address.full_name'] = 'required|string|max:255';
+            $rules['new_address.phone'] = 'required|string|max:20';
+            $rules['new_address.address_line1'] = 'required|string|max:255';
+            $rules['new_address.city'] = 'required|string|max:100';
+        }
+
+        // Nếu là Guest, bắt buộc phải có Email để gửi đơn hàng
+        if (!$user) {
+            $rules['email'] = 'required|email|max:255';
+        }
+
+        $request->validate($rules);
+
+        try {
+            // 2. Merge Guest Email vào payload nếu có
+            $payload = $request->all();
+            if (!$user && $request->has('email')) {
+                // Lưu email guest vào metadata hoặc shipping address để liên hệ
+                $payload['guest_email'] = $request->email;
+            }
+
+            // 3. Gọi Service xử lý
+            $order = $this->orderService->placeOrder($user, $payload);
+
             $debug = [
                 'module' => 'Order',
                 'action' => 'PlaceOrder',
@@ -74,7 +92,6 @@ class CheckoutController extends Controller
                 'amount' => $order->total_amount
             ];
 
-            // 4. Hybrid Response
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
@@ -87,25 +104,12 @@ class CheckoutController extends Controller
             return redirect()->route('checkout.thankyou', $order->id)
                 ->with('server_debug', $debug);
         } catch (\Exception $e) {
-            // Xử lý lỗi (Hết hàng, Lỗi DB, v.v.)
-            $debug = [
-                'module' => 'Order',
-                'action' => 'PlaceOrder',
-                'status' => 'Failed',
-                'error' => $e->getMessage()
-            ];
+            $debug = ['module' => 'Order', 'action' => 'PlaceOrder', 'status' => 'Failed', 'error' => $e->getMessage()];
 
             if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                    'debug' => $debug
-                ], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage(), 'debug' => $debug], 422);
             }
-
-            return back()->withErrors(['error' => $e->getMessage()])
-                ->withInput()
-                ->with('server_debug', $debug);
+            return back()->withErrors(['error' => $e->getMessage()])->withInput()->with('server_debug', $debug);
         }
     }
 

@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 
 class Banner extends Model
 {
+    protected $appends = ['image_url'];
+
     protected $fillable = [
         'title', 'image', 'url', 'position',
         'sort_order', 'is_active', 'description'

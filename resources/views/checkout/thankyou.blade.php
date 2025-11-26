@@ -73,7 +73,7 @@
                     </a>
                     @auth
                         {{-- Link này cần trỏ về route quản lý đơn hàng của user (Module A update sau) --}}
-                        <a href="{{ url('/dashboard') }}"
+                        <a href="{{ url('/home') }}"
                             class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
                             Quản lý đơn hàng
                         </a>

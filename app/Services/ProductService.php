@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -125,6 +126,61 @@ class ProductService
     public function getAllIds(array $filters): array
     {
         return Product::pluck('id')->toArray(); // Có thể apply filter vào đây nếu cần chính xác hơn
+    }
+
+    public function findActiveBySlug(string $slug)
+    {
+        return Product::where('slug', $slug)
+            ->where('status', 'active')
+            ->with(['category', 'images' => function ($q) {
+                $q->orderBy('sort_order');
+            }])
+            ->firstOrFail();
+    }
+
+    public function getProductsByCategory(string $categorySlug, int $perPage = 12, array $filters = [])
+    {
+        // 1. Tìm danh mục cha
+        $category = Category::where('slug', $categorySlug)->firstOrFail();
+
+        // 2. Lấy tất cả ID danh mục con (để filter sâu)
+        $categoryIds = $category->children()->pluck('id')->push($category->id);
+
+        // 3. Query sản phẩm
+        $query = Product::whereIn('category_id', $categoryIds)
+            ->where('status', 'active');
+
+        // Filter: Giá
+        if (isset($filters['price_min'])) {
+            $query->where('price', '>=', $filters['price_min']);
+        }
+        if (isset($filters['price_max'])) {
+            $query->where('price', '<=', $filters['price_max']);
+        }
+
+        // Sort
+        if (isset($filters['sort'])) {
+            switch ($filters['sort']) {
+                case 'price_asc':
+                    $query->orderBy('price', 'asc');
+                    break;
+                case 'price_desc':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'name_asc':
+                    $query->orderBy('name', 'asc');
+                    break;
+                default:
+                    $query->latest(); // newset
+            }
+        } else {
+            $query->latest();
+        }
+
+        return [
+            'category' => $category,
+            'products' => $query->paginate($perPage)->withQueryString()
+        ];
     }
 
     // --- Private Helpers ---

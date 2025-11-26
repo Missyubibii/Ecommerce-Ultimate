@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 
 class Product extends Model
 {
+    protected $appends = ['image_url'];
+
     protected $fillable = [
         'category_id',
         'sku',
@@ -28,7 +30,7 @@ class Product extends Model
         'is_active',
         'is_featured',
         'special_offer',
-        'online_only' 
+        'online_only'
     ];
 
     protected $casts = [

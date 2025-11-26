@@ -9,69 +9,72 @@ use App\Models\Banner;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Lấy Banner cho Main Slider từ DB
+        // 1. Lấy Banner (Đã fix model có image_url)
         $banners = Banner::where('position', 'main_slider')
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
 
-        // Fallback nếu chưa có banner trong DB để tránh lỗi view
-        if ($banners->isEmpty()) {
-            $banners = collect([
-                (object)[
-                    'id' => 1,
-                    'title' => 'Chào mừng đến với Ultimate Store',
-                    'image_url' => 'https://placehold.co/1200x450/2563eb/ffffff?text=Ultimate+Store',
-                    'url' => '#'
+        // 2. Lấy Danh mục Gốc kèm danh mục con
+        $rootCategories = Category::whereNull('parent_id')
+            ->with('children')
+            ->orderBy('name')
+            ->get();
+
+        // 3. Xử lý Sections: Lấy sản phẩm từ cả danh mục CHA và CON
+        $sections = $rootCategories->map(function ($cat) {
+            // Lấy ID của danh mục cha hiện tại + tất cả ID danh mục con
+            $categoryIds = $cat->children->pluck('id')->push($cat->id);
+
+            // Truy vấn sản phẩm thuộc bất kỳ ID nào trong danh sách trên
+            $products = Product::whereIn('category_id', $categoryIds)
+                ->where('status', 'active') // Đảm bảo sản phẩm đang Active
+                ->latest()
+                ->take(8)
+                ->get()
+                ->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'price' => $p->price,
+                        'cost_price' => $p->cost_price,
+                        'image_url' => $p->image_url, 
+                        'detail_url' => route('product.show', $p->slug)
+                    ];
+                });
+
+            return [
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'url' => route('category.show', $cat->slug),
+                'products' => $products
+            ];
+        });
+
+        // 4. Menu Tree (Dùng lại $rootCategories cho tối ưu)
+        $menuTree = $rootCategories->map(function($cat){
+            return [
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'children' => $cat->children
+            ];
+        });
+
+        // --- TRẢ VỀ JSON NẾU LÀ AJAX (ALPINE.JS GỌI) ---
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'banners' => $banners,
+                    'sections' => $sections,
+                    'menu' => $menuTree
                 ]
             ]);
         }
 
-        // 2. Lấy Danh mục & Sản phẩm
-        $categoriesData = Category::whereNull('parent_id')
-            ->with(['products' => function ($q) {
-                $q->where('status', 'active')->latest()->take(8);
-            }])
-            ->get()
-            ->map(function ($cat) {
-                return [
-                    'id' => $cat->id,
-                    'name' => $cat->name,
-                    // 'url' => route('search.results', ['category_id' => $cat->id]),
-                    'is_featured' => 1,
-                    'products' => $cat->products
-                ];
-            });
-
-        $product_category = [$categoriesData];
-
-        return view('home', compact('banners', 'product_category'));
-    }
-
-    public function search(Request $request)
-    {
-        $query = Product::query()->where('status', 'active');
-
-        if ($request->has('q')) {
-            $searchTerm = $request->q;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                    ->orWhere('sku', 'like', "%{$searchTerm}%");
-            });
-        }
-
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        // Eager load category để tránh N+1 query
-        $products = $query->with('category')->paginate(12)->withQueryString();
-
-        // Lấy danh mục để làm sidebar filter
-        $categories = Category::whereNull('parent_id')->with('children')->get();
-
-        return view('welcome', compact('products', 'categories'));
+        // Trả về View lần đầu load trang
+        return view('home');
     }
 }

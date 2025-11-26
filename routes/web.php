@@ -5,6 +5,7 @@ use App\Http\Controllers\AddressController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -25,11 +26,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// Product & Category Routes (Mới)
+Route::get('/category/{slug}', [PublicProductController::class, 'category'])->name('category.show');
+Route::get('/product/{slug}', [PublicProductController::class, 'show'])->name('product.show');
+
 // Cart Routes
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout/place-order', [CheckoutController::class, 'store'])->name('order.place');
+Route::get('/checkout/thankyou/{id}', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
 
 /*
 |--------------------------------------------------------------------------
@@ -40,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard của khách hàng
     Route::get('/home', function () {
         return view('home');
-    })->name('home');
+    })->name('dashboard');
 
     // Quản lý Profile & Address
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -53,10 +62,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{address}', [AddressController::class, 'destroy'])->name('destroy');
         Route::patch('/{address}/default', [AddressController::class, 'setDefault'])->name('set-default');
     });
-
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout/place-order', [CheckoutController::class, 'store'])->name('order.place');
-    Route::get('/checkout/thankyou/{id}', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
 });
 
 /*
