@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use App\Models\ProductImage;
 
 class Product extends Model
 {
@@ -20,32 +21,41 @@ class Product extends Model
         'description',
         'price',
         'cost_price',
+        'market_price',
+        'warranty',
+        'special_offer',
         'quantity',
         'weight',
         'status',
         'image',
         'metadata',
+        'colors',
         'unit',
         'min_stock',
         'is_active',
         'is_featured',
-        'special_offer',
         'online_only'
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'colors' => 'array',
         'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'market_price' => 'decimal:2',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
-        'special_offer' => 'boolean',
         'online_only' => 'boolean',
     ];
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function product_images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order', 'asc');
     }
 
     public function images(): HasMany

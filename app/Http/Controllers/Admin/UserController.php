@@ -6,12 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 
-class UserController extends Controller implements HasMiddleware
+class UserController extends Controller
 {
     protected $userService;
 
@@ -20,54 +18,18 @@ class UserController extends Controller implements HasMiddleware
         $this->userService = $userService;
     }
 
-    /**
-     * Define middleware for the controller (Laravel 11/12 Standard)
-     */
-    public static function middleware(): array
-    {
-        return [
-            'auth',
-            new Middleware('role:admin', only: ['index', 'create', 'store', 'edit', 'update', 'destroy']),
-        ];
-    }
-
-    /**
-     * Display a listing of users.
-     */
     public function index(Request $request)
     {
-        $filters = $request->all();
+        $users = $this->userService->listing($request->all());
+        $allUserIds = $this->userService->getAllIds($request->all());
+        $roles = Role::all(); // Để hiển thị filter
+        return view('admin.users.index', compact('users', 'roles', 'allUserIds'));
+    }
 
-        // 1. Gọi Service để lấy danh sách (đã phân trang & lọc)
-        $users = $this->userService->listing($filters);
-
-        // 2. Lấy danh sách tất cả ID khớp với bộ lọc (để dùng cho nút "Chọn tất cả")
-        $allUserIds = $this->userService->getAllIds($filters);
-
-        // Lấy danh sách Roles cho dropdown lọc
+    public function edit(User $user)
+    {
         $roles = Role::all();
-
-        $debug = [
-            'module' => 'AdminUser',
-            'action' => 'List',
-            'filters' => $filters,
-            'count' => $users->total()
-        ];
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'users' => $users,
-                'debug' => $debug
-            ]);
-        }
-
-        return view('admin.users.index', [
-            'users' => $users,
-            'roles' => $roles,
-            'allUserIds' => $allUserIds,
-            'server_debug' => $debug
-        ]);
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     /**
@@ -97,102 +59,36 @@ class UserController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Update the specified user.
-     */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        // 1. Validate dữ liệu
+        $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+            'roles' => 'array', // Array các role name hoặc id
             'status' => 'required|in:active,inactive,banned',
-            'roles' => 'array',
-            'roles.*' => 'exists:roles,name',
+            'avatar' => 'nullable|image|max:2048'
         ]);
 
-        $user->update($validated);
+        try {
+            // 2. Gọi Service để update và ghi log
+            $this->userService->updateUser($user, $data);
 
-        // Update roles
-        if ($request->has('roles')) {
-            $user->syncRoles($request->roles);
+            return redirect()->route('admin.users.index')
+                ->with('success', 'Cập nhật người dùng thành công!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Lỗi: ' . $e->getMessage());
         }
-
-        $debug = [
-            'module' => 'AdminUser',
-            'action' => 'Update',
-            'user_id' => $user->id
-        ];
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Người dùng đã được cập nhật thành công',
-                'user' => $user,
-                'debug' => $debug
-            ]);
-        }
-
-        return redirect()->route('admin.users.show', $user)
-            ->with('status', 'Người dùng đã được cập nhật thành công')
-            ->with('server_debug', $debug);
     }
 
-    /**
-     * Reset user password.
-     */
-    public function resetPassword(Request $request, User $user)
+    public function destroy(User $user)
     {
-        $validated = $request->validate([
-            'password' => 'required|string|confirmed|min:8',
-        ]);
-
-        $user->update([
-            'password' => Hash::make($validated['password'])
-        ]);
-
-        $debug = [
-            'module' => 'AdminUser',
-            'action' => 'ResetPassword',
-            'user_id' => $user->id
-        ];
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Mật khẩu đã được đặt lại thành công',
-                'debug' => $debug
-            ]);
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'Không thể xóa tài khoản của chính mình.');
         }
-
-        return redirect()->route('admin.users.show', $user)
-            ->with('status', 'Mật khẩu đã được đặt lại thành công')
-            ->with('server_debug', $debug);
-    }
-
-    /**
-     * Handle Bulk Delete
-     */
-    public function bulkDelete(Request $request)
-    {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:users,id',
-        ]);
-
-        $count = $this->userService->bulkDelete($request->ids);
-
-        $debug = [
-            'module' => 'AdminUser',
-            'action' => 'BulkDelete',
-            'count' => $count,
-            'ids' => $request->ids
-        ];
-
-        return response()->json([
-            'success' => true,
-            'message' => "Đã xóa thành công $count người dùng.",
-            'debug' => $debug
-        ]);
+        $user->delete();
+        return back()->with('success', 'Đã xóa người dùng.');
     }
 }

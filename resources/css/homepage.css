@@ -1,50 +1,103 @@
-/* Marquee Animation */
-@keyframes marquee {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-.animate-marquee {
-    display: inline-flex;
-    animation: marquee 20s linear infinite;
-}
-.marquee:hover .animate-marquee {
-    animation-play-state: paused;
-}
-
-/* Banner Styles */
-#banner-swiper-container .swiper-pagination-bullet-active {
-    background-color: #4f46e5; /* Indigo 600 */
-}
-
-/* Product Card Styles */
-.product-card {
-    transition: all 0.3s ease;
-}
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-}
-
 /* Swiper Button Customization */
-.swiper-button-next, .swiper-button-prev {
+.swiper-button-next,
+.swiper-button-prev {
     width: 40px !important;
     height: 40px !important;
     background-color: white;
     border-radius: 50%;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    color: #374151 !important; /* Gray 700 */
-}
-.swiper-button-next:after, .swiper-button-prev:after {
-    font-size: 18px !important;
-    font-weight: bold;
-}
-.swiper-button-disabled {
-    opacity: 0 !important;
+    color: #374151 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
 }
 
-/* Fade In Section Animation */
-.fade-in-section {
+/* QUAN TRỌNG: Ẩn mũi tên mặc định của Swiper */
+.swiper-button-next::after,
+.swiper-button-prev::after {
+    display: none !important;
+    content: "" !important;
+}
+
+/* Tùy chỉnh kích thước SVG của bạn (nếu cần) */
+.swiper-button-next svg,
+.swiper-button-prev svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Ẩn nút khi không slide được*/
+.swiper-button-disabled {
+    opacity: 0 !important;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Custom Swiper Navigation Buttons */
+.custom-nav-btn {
+    /* Layout & Size */
+    display: none;
+    /* Ẩn trên mobile */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    z-index: 20;
+
+    /* Styling */
+    background-color: white;
+    border: 1px solid #f3f4f6;
+    /* gray-100 */
+    border-radius: 50%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    color: #4b5563;
+    /* gray-600 */
+
+    /* Flex để căn giữa icon SVG */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    /* Animation */
+    opacity: 0;
+    /* Mặc định ẩn */
+    transition: all 0.3s ease;
+}
+
+/* Hiện nút khi màn hình > 768px (md) */
+@media (min-width: 768px) {
+    .custom-nav-btn {
+        display: flex;
+    }
+}
+
+/* Hiện nút khi hover vào slider */
+.group\/slider:hover .custom-nav-btn {
     opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+/* Hiệu ứng hover vào nút */
+.custom-nav-btn:hover {
+    color: #4f46e5;
+    /* indigo-600 */
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Vị trí cụ thể */
+.custom-nav-btn.prev {
+    left: -20px;
+}
+
+.custom-nav-btn.next {
+    right: -20px;
+}
+
+/* Trạng thái disabled (khi hết slide) */
+.swiper-button-disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed;
+    pointer-events: none;
 }

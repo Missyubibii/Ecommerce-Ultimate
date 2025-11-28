@@ -26,4 +26,6 @@ class Setting extends Model
     {
         return self::updateOrCreate(['key' => $key], ['value' => $value]);
     }
+
+    public $timestamps = false;
 }

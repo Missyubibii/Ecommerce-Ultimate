@@ -47,8 +47,18 @@
                             @foreach($order->items as $item)
                                 <li class="p-4 flex items-center hover:bg-gray-50">
                                     <div class="flex-shrink-0 h-16 w-16 border rounded overflow-hidden bg-white">
+                                        @php
+                                            $imgSnapshot = $item->product_snapshot['image'] ?? $item->product_snapshot['image_url'] ?? null;
+                                            if ($imgSnapshot && !str_starts_with($imgSnapshot, 'http')) {
+                                                $imgSrc = asset('storage/' . $imgSnapshot);
+                                            } else {
+                                                $imgSrc = $imgSnapshot ?? 'https://placehold.co/100?text=No+Image';
+                                            }
+                                        @endphp
                                         <img class="h-full w-full object-contain"
-                                            src="{{ $item->product_snapshot['image'] ?? 'https://placehold.co/100' }}" alt="">
+                                            src="{{ $imgSrc }}"
+                                            alt="{{ $item->product_name }}">
+
                                     </div>
                                     <div class="ml-4 flex-1">
                                         <div class="flex justify-between">

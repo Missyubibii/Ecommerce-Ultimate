@@ -31,9 +31,9 @@ class BannerController extends Controller
     {
         $request->validate([
             'title' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048', // 2MB
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'url' => 'nullable|url',
-            'position' => 'required|in:main_slider,header_top',
+            'position' => 'required|in:main_slider,header_top,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6',
             'sort_order' => 'integer',
         ]);
 
@@ -51,9 +51,9 @@ class BannerController extends Controller
     {
         $request->validate([
             'title' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'url' => 'nullable|url',
-            'position' => 'required|in:main_slider,header_top',
+            'position' => 'required|in:main_slider,header_top,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6',
             'sort_order' => 'integer',
         ]);
 

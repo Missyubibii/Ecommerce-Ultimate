@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\CartItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Paginator::defaultView('vendor.pagination.custom-tailwind');
+        Paginator::defaultSimpleView('vendor.pagination.custom-tailwind');
         View::composer(['layouts.app', 'products.index'], CategoryComposer::class);
 
         View::composer('*', function ($view) {
@@ -35,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
                 ->orderBy('sort_order')
                 ->get();
 
-            // 2. Categories cho Menu 
+            // 2. Categories cho Menu
             $menuCategories = Category::whereNull('parent_id')
                 ->with('children')
                 ->orderBy('name')

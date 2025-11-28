@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PublicProductController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\SearchReportController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +28,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Product & Category Routes (Mới)
+// Product & Category Routes
 Route::get('/category/{slug}', [PublicProductController::class, 'category'])->name('category.show');
 Route::get('/product/{slug}', [PublicProductController::class, 'show'])->name('product.show');
 
@@ -36,9 +38,18 @@ Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 
+// Checkout Routes
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout/place-order', [CheckoutController::class, 'store'])->name('order.place');
 Route::get('/checkout/thankyou/{id}', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
+
+// Search Routes
+Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
+
+// Static Pages
+// Route::view('/xdch', 'pages.build-pc')->name('build-pc');
+// Route::view('/tin-tuc', 'pages.news')->name('news');
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +138,9 @@ Route::middleware(['auth', 'role:admin'])
 
         // Banner Management
         Route::resource('banners', BannerController::class);
+
+        // Search Reports Management
+        Route::get('/search-reports', [SearchReportController::class, 'index'])->name('search_reports.index');
     });
 
 require __DIR__ . '/auth.php';

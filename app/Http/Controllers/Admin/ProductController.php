@@ -54,10 +54,9 @@ class ProductController extends Controller implements HasMiddleware
     {
         $data = $this->validateProduct($request);
 
-        // Xử lý boolean checkbox (HTML form không gửi value nếu unchecked)
+        // Xử lý boolean checkbox
         $data['is_active'] = $request->boolean('is_active');
         $data['is_featured'] = $request->boolean('is_featured');
-        $data['special_offer'] = $request->boolean('special_offer');
         $data['online_only'] = $request->boolean('online_only');
 
         $product = $this->productService->create($data);
@@ -148,6 +147,9 @@ class ProductController extends Controller implements HasMiddleware
             'description' => 'nullable|string',
             'specifications' => 'nullable|string',
             'stock_locations' => 'nullable|string',
+            'market_price' => 'nullable|numeric|min:0',
+            'warranty' => 'nullable|string|max:255',
+            'special_offer' => 'nullable|string',
         ]);
     }
 }

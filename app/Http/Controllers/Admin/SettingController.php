@@ -23,11 +23,16 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
-        // Xử lý upload ảnh riêng nếu có (ví dụ logo) - logic đơn giản hóa ở đây
-        $data = $request->except(['_token', '_method']);
+        try {
+            // Loại bỏ token và method trước khi gửi sang service
+            $data = $request->except(['_token', '_method']);
 
-        $this->settingService->updateSettings($data);
+            // Gọi service để xử lý data
+            $this->settingService->updateSettings($data);
 
-        return back()->with('success', 'Cập nhật cấu hình thành công.');
+            return back()->with('success', 'Cập nhật cấu hình thành công!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Lỗi cập nhật: ' . $e->getMessage());
+        }
     }
 }

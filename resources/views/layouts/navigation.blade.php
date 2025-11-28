@@ -1,103 +1,291 @@
-{{-- 1. Top Banner (Swiper) --}}
-<div class="relative bg-gray-900 h-10 overflow-hidden">
-    <div class="swiper-container h-full" id="top-banner-swiper">
-        <div class="swiper-wrapper">
-            @forelse($headerBanners ?? [] as $banner)
-                {{-- Cast to object to prevent non-object errors --}}
-                @php $banner = (object) $banner; @endphp
-                <div class="swiper-slide flex items-center justify-center text-xs font-medium text-white tracking-wide">
-                    <a href="{{ $banner->url ?? '#' }}"
-                        class="flex items-center gap-2 w-full h-full justify-center hover:text-indigo-300 transition">
-                        @if(isset($banner->image_url) && $banner->image_url)
-                            <img src="{{ $banner->image_url }}" alt=""
-                                class="h-full object-cover opacity-50 hover:opacity-100 w-full absolute inset-0 z-0">
-                        @endif
-                        <span class="relative z-10">{{ $banner->title ?? 'Welcome to our store' }}</span>
-                    </a>
-                </div>
-            @empty
-                <div class="swiper-slide flex items-center justify-center text-xs text-white">
-                    Chào mừng đến với {{ config('app.name') }}
-                </div>
-            @endforelse
-        </div>
-    </div>
-</div>
+<div x-data="{
+    mobileMenuOpen: false,
+    categoryPopupOpen: false,
+    activeCategory: {{ $menuCategories->first()->id ?? 0 }}
+}" class="w-full contents">
 
-{{-- 2. Marquee Links --}}
-<div class="bg-indigo-50 border-b border-indigo-100 h-10 flex items-center overflow-hidden">
-    <div class="container mx-auto px-4 relative w-full h-full flex items-center">
-        <div class="w-full overflow-hidden">
-            <div class="animate-marquee inline-block pl-full">
-                <span class="inline-flex items-center gap-8 text-sm font-medium text-indigo-800">
-                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="zap"
-                            class="w-4 h-4 text-yellow-500"></i> Flash Sale: Giảm 50% màn hình!</a>
-                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="truck"
-                            class="w-4 h-4 text-blue-500"></i> Freeship đơn từ 500k</a>
-                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="shield-check"
-                            class="w-4 h-4 text-green-500"></i> Bảo hành chính hãng 24 tháng</a>
-                    <a href="#" class="flex items-center gap-2 hover:text-indigo-600"><i data-lucide="gift"
-                            class="w-4 h-4 text-red-500"></i> Quà tặng trị giá 1 triệu đồng</a>
-                </span>
+    {{-- 1. TOP BANNER (Swiper) --}}
+    <div class="relative bg-gray-900 h-10 overflow-hidden">
+        <div class="swiper-container h-full" id="top-banner-swiper">
+            <div class="swiper-wrapper">
+                @forelse($headerBanners ?? [] as $banner)
+                    @php $banner = (object) $banner; @endphp
+                    <a href="{{ $banner->url ?? '#' }}"
+                        class="swiper-slide flex items-center justify-center w-full h-full group">
+                        @if(isset($banner->image_url) && $banner->image_url)
+                            <img src="{{ $banner->image_url }}" alt="{{ $banner->title ?? '' }}"
+                                class="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                        @else
+                            <span
+                                class="text-xs font-medium text-white tracking-wide">{{ $banner->title ?? 'Welcome to Ultimate Store' }}</span>
+                        @endif
+                    </a>
+                @empty
+                    <div class="swiper-slide flex items-center justify-center text-xs text-white font-medium">
+                        Chào mừng đến với {{ config('app.name') }}
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
-</div>
 
-{{-- 3. Main Header --}}
-<div x-data="{ showSidebar: false }">
+    {{-- 2. HOT LINKS BAR --}}
+    <div class="bg-gray-100 sticky top-0 z-[60] border-b border-gray-200 hidden md:block">
+        <div class="container mx-auto px-4 h-10 flex items-center justify-between text-sm">
+            {{-- Marquee bên trái --}}
+            <div class="flex-grow min-w-0 overflow-hidden w-1/2 relative">
+                <div class="animate-marquee whitespace-nowrap inline-block hover:pause">
+                    <span class="inline-flex items-center gap-8 text-gray-600 font-medium">
+                        <a href="#" class="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                            <i data-lucide="zap" class="w-4 h-4 text-yellow-500 fill-yellow-500"></i>
+                            <span>Khuyến mãi HOT: Giảm giá 20% cho toàn bộ Màn hình!</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                            <i data-lucide="truck" class="w-4 h-4 text-blue-500"></i>
+                            <span>Miễn phí vận chuyển cho đơn hàng trên 2 triệu.</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i>
+                            <span>Hàng chính hãng, bảo hành lên tới 36 tháng.</span>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                            <i data-lucide="zap" class="w-4 h-4 text-yellow-500 fill-yellow-500"></i>
+                            <span>Khuyến mãi HOT: Giảm giá 20% cho toàn bộ Màn hình!</span>
+                        </a>
+                    </span>
+                </div>
+            </div>
 
-    <header class="bg-white shadow-sm sticky top-0 z-40">
+            {{-- Links bên phải --}}
+            <div
+                class="flex items-center gap-x-4 flex-shrink-0 text-gray-700 font-semibold pl-4 bg-gray-100 z-10 relative h-full">
+                <a href="#" class="flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
+                    <i data-lucide="map-pin" class="w-4 h-4"></i><span>Showroom</span>
+                </a>
+                <span class="text-gray-300">|</span>
+
+                {{-- Dropdown Hỗ trợ --}}
+                <div class="relative group h-full flex items-center" x-data="{ openSupport: false }">
+                    <button @mouseover="openSupport = true" @mouseleave="openSupport = false"
+                        class="flex items-center gap-1.5 hover:text-indigo-600 transition-colors cursor-pointer h-full outline-none px-1 relative z-20">
+                        <i data-lucide="life-buoy" class="w-4 h-4"></i>
+                        <span>Hỗ trợ</span>
+                        <i data-lucide="chevron-down"
+                            class="w-3 h-3 transition-transform duration-200 group-hover:rotate-180"></i>
+                    </button>
+
+                    <div x-show="openSupport" @mouseover="openSupport = true" @mouseleave="openSupport = false"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 translate-y-2"
+                        class="absolute right-0 top-7 pt-4 w-64 z-[100]" style="display: none;">
+
+                        <div class="bg-white text-gray-700 shadow-xl rounded-lg border border-gray-100 py-2 relative">
+                            {{-- Mũi tên trang trí --}}
+                            <div
+                                class="absolute -top-1.5 right-10 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45">
+                            </div>
+
+                            <a href="#"
+                                class="flex items-center gap-3 px-4 py-2.5 hover:text-indigo-600 hover:bg-gray-50 text-sm transition-colors relative z-10">
+                                <i data-lucide="shopping-cart" class="w-4 h-4 text-gray-400"></i>
+                                <span>Mua Hàng Online</span>
+                            </a>
+
+                            <a href="#"
+                                class="flex items-center gap-3 px-4 py-2.5 hover:text-indigo-600 hover:bg-gray-50 text-sm transition-colors relative z-10">
+                                {{-- ĐÃ SỬA LỖI TÊN ICON --}}
+                                <i data-lucide="credit-card" class="w-4 h-4 text-gray-400"></i>
+                                <span>Hướng Dẫn Thanh Toán</span>
+                            </a>
+
+                            <a href="#"
+                                class="flex items-center gap-3 px-4 py-2.5 hover:text-indigo-600 hover:bg-gray-50 text-sm transition-colors relative z-10">
+                                <i data-lucide="package-plus" class="w-4 h-4 text-gray-400"></i>
+                                <span>Mua Hàng Trả Góp</span>
+                            </a>
+
+                            <a href="#"
+                                class="flex items-center gap-3 px-4 py-2.5 hover:text-indigo-600 hover:bg-gray-50 text-sm transition-colors relative z-10">
+                                <i data-lucide="message-square-plus" class="w-4 h-4 text-gray-400"></i>
+                                <span>Góp Ý, Khiếu Nại</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <span class="text-gray-300">|</span>
+                <a href="/tin-tuc" class="flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
+                    <i data-lucide="newspaper" class="w-4 h-4"></i><span>Tin Tức</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- 3. MAIN HEADER --}}
+    <header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300 w-full">
         <div class="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
 
-            <div class="flex items-center gap-6">
-                {{-- Logo --}}
-                <a href="{{ route('home') }}" class="flex items-center gap-2 group">
-                    <div
-                        class="bg-indigo-600 text-white p-2 rounded-lg shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform duration-300">
-                        <i data-lucide="cpu" class="w-6 h-6"></i>
+            {{-- Mobile Menu Trigger --}}
+            <button @click="mobileMenuOpen = true"
+                class="md:hidden p-2 text-gray-600 hover:text-indigo-600 transition-colors">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+
+            {{-- Nút Danh mục (Mega Menu Trigger) & Build PC --}}
+            <div class="hidden md:flex items-center gap-3">
+                <div class="relative group" @mouseleave="categoryPopupOpen = false">
+                    <button @mouseover="categoryPopupOpen = true" @click="categoryPopupOpen = !categoryPopupOpen"
+                        class="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 rounded-lg transition-all font-bold text-sm">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                        <span>Danh mục</span>
+                    </button>
+
+                    {{-- MEGA MENU POPUP --}}
+                    <div x-show="categoryPopupOpen" x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        class="absolute top-full left-0 z-[60] w-[800px] pt-2" style="display: none;">
+
+                        {{-- Wrapper giao diện --}}
+                        <div
+                            class="bg-white shadow-2xl rounded-xl border border-gray-200 flex overflow-hidden min-h-[450px]">
+                            {{-- Cột trái: Danh mục cha --}}
+                            <div class="w-1/3 bg-gray-50 border-r border-gray-100 py-2 overflow-y-auto max-h-[500px]">
+                                @foreach($menuCategories ?? [] as $cat)
+                                    @php $cat = (object) $cat; @endphp
+                                    <a href="{{ route('category.show', $cat->slug) }}"
+                                        @mouseover="activeCategory = {{ $cat->id }}"
+                                        :class="activeCategory === {{ $cat->id }} ? 'bg-white text-indigo-600 border-l-4 border-indigo-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100 border-l-4 border-transparent'"
+                                        class="flex items-center justify-between px-4 py-3 text-sm font-medium transition-all duration-200">
+                                        <span class="flex items-center gap-2">
+                                            <i data-lucide="circle" class="w-2 h-2 text-gray-300"
+                                                :class="activeCategory === {{ $cat->id }} ? 'text-indigo-500 fill-indigo-500' : ''"></i>
+                                            {{ $cat->name }}
+                                        </span>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"
+                                            :class="activeCategory === {{ $cat->id }} ? 'text-indigo-500' : ''"></i>
+                                    </a>
+                                @endforeach
+                            </div>
+
+                            {{-- Cột phải: Danh mục con (Grid) --}}
+                            <div class="w-2/3 p-6 bg-white overflow-y-auto max-h-[500px]">
+                                @foreach($menuCategories ?? [] as $cat)
+                                    @php $cat = (object) $cat; @endphp
+                                    <div x-show="activeCategory === {{ $cat->id }}" class="h-full flex flex-col">
+                                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+                                            <h3 class="text-lg font-bold text-gray-800">{{ $cat->name }}</h3>
+                                            <a href="{{ route('category.show', $cat->slug) }}"
+                                                class="text-sm text-indigo-600 hover:underline flex items-center gap-1 font-medium">
+                                                Xem tất cả <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                            </a>
+                                        </div>
+
+                                        @if(isset($cat->children) && count($cat->children) > 0)
+                                            <div class="grid grid-cols-3 gap-4">
+                                                @foreach($cat->children as $child)
+                                                    @php $child = (object) $child; @endphp
+                                                    <a href="{{ route('category.show', $child->slug) }}"
+                                                        class="group flex flex-col items-center text-center p-3 rounded-lg hover:bg-gray-50 transition border border-transparent hover:border-gray-100">
+                                                        <div
+                                                            class="w-14 h-14 mb-2 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200 group-hover:border-indigo-200 transition-colors">
+                                                            <span
+                                                                class="text-sm font-bold text-gray-400 group-hover:text-indigo-500">{{ substr($child->name, 0, 1) }}</span>
+                                                        </div>
+                                                        <span
+                                                            class="text-xs font-semibold text-gray-600 group-hover:text-indigo-600 line-clamp-2 transition-colors">
+                                                            {{ $child->name }}
+                                                        </span>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="flex-1 flex flex-col items-center justify-center text-gray-400 h-full">
+                                                <i data-lucide="package-open" class="w-16 h-16 mb-3 opacity-20"></i>
+                                                <p class="text-sm">Chưa có danh mục con</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-xl font-bold text-gray-900 leading-none tracking-tight">ULTIMATE</span>
-                        <span class="text-xs font-medium text-indigo-600 tracking-widest">STORE</span>
+                </div>
+
+                {{-- <a href="/xdch"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 rounded-lg transition-all font-bold text-sm">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                    <span>Build PC</span>
+                </a> --}}
+            </div>
+
+            {{-- Logo --}}
+            <a href="{{ route('home') }}" class="flex items-center gap-2 group">
+                <div
+                    class="bg-indigo-600 text-white p-2 rounded-lg shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xl font-bold text-gray-900 leading-none tracking-tight">ULTIMATE</span>
+                    <span class="text-xs font-medium text-indigo-600 tracking-widest">STORE</span>
+                </div>
+            </a>
+
+
+            {{-- Search Bar (Giữa) --}}
+            <div class="flex-1 max-w-xl mx-4 hidden md:block">
+                <form method="get" action="/tim" class="relative group">
+                    <input type="text" name="q" placeholder="Nhập sản phẩm bạn cần tìm..."
+                        class="w-full pl-5 pr-12 py-2.5 rounded-full border border-gray-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 outline-none transition-all text-sm bg-gray-50 focus:bg-white placeholder-gray-400"
+                        autocomplete="off" />
+                    <button type="submit"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-md flex items-center justify-center">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+
+            {{-- Header Actions (Phải) --}}
+            <div class="flex items-center gap-4">
+                {{-- Hotline --}}
+                <a href="tel:0968691011" class="hidden xl:flex items-center gap-3 group">
+                    <div
+                        class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                        <i data-lucide="phone" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-xs">
+                        <span class="text-gray-500 block font-medium">Hotline mua hàng</span>
+                        <strong class="text-indigo-600 text-sm">09.6869.1011</strong>
                     </div>
                 </a>
 
-                {{-- Nút Menu Danh mục (Desktop) --}}
-                <button @click="showSidebar = true"
-                    class="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-indigo-50 text-gray-700 hover:text-indigo-700 rounded-full transition-all font-medium text-sm">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
-                    <span>Danh mục</span>
-                </button>
-            </div>
-
-            {{-- Actions --}}
-            <div class="flex items-center gap-2 sm:gap-4">
-                {{-- Mobile Menu Trigger --}}
-                <button @click="showSidebar = true" class="md:hidden p-2 text-gray-600 hover:text-indigo-600">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-
                 {{-- Cart --}}
                 <a href="{{ route('cart.index') }}"
-                    class="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors group"
+                    class="relative group flex flex-col items-center justify-center w-10 h-10 md:w-auto md:h-auto"
                     x-data="{
                         count: {{ $cartCount ?? 0 }},
                         updateCount(event) {
                             this.count = event.detail.count;
-                            // Hiệu ứng rung lắc nhẹ khi cập nhật
                             this.$el.classList.add('animate-bounce');
                             setTimeout(() => this.$el.classList.remove('animate-bounce'), 1000);
                         }
                     }" @cart-updated.window="updateCount($event)">
-                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
 
-                    <span x-show="count > 0" x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0 scale-50" x-transition:enter-end="opacity-100 scale-100"
-                        class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full ring-2 ring-white transform group-hover:scale-110 transition-transform"
-                        x-text="count > 99 ? '99+' : count">
-                        {{ ($cartCount ?? 0) > 99 ? '99+' : ($cartCount ?? 0) }}
-                    </span>
+                    <div class="relative p-2 text-gray-600 group-hover:text-indigo-600 transition-colors">
+                        <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                        <span x-show="count > 0"
+                            class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm"
+                            x-text="count > 99 ? '99+' : count">
+                            {{ ($cartCount ?? 0) > 99 ? '99+' : ($cartCount ?? 0) }}
+                        </span>
+                    </div>
+                    <span
+                        class="text-[10px] font-bold text-gray-600 group-hover:text-indigo-600 hidden md:block uppercase">Giỏ
+                        hàng</span>
                 </a>
 
                 {{-- User Dropdown --}}
@@ -160,107 +348,87 @@
         </div>
     </header>
 
-    {{-- 4. OFF-CANVAS SIDEBAR MENU --}}
-    <div class="relative z-50" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" x-show="showSidebar"
-        style="display: none;">
-
+    {{-- 4. MOBILE MENU (Sidebar) --}}
+    <div class="relative z-[100]" x-show="mobileMenuOpen" style="display: none;">
         {{-- Backdrop --}}
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" x-show="showSidebar"
-            x-transition:enter="ease-in-out duration-500" x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100" x-transition:leave="ease-in-out duration-500"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="showSidebar = false">
+        <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" x-show="mobileMenuOpen"
+            x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="mobileMenuOpen = false">
         </div>
 
-        <div class="fixed inset-0 overflow-hidden">
-            <div class="absolute inset-0 overflow-hidden">
-                <div class="pointer-events-none fixed inset-y-0 left-0 flex max-w-full pr-10">
+        {{-- Panel --}}
+        <div class="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl transform transition-transform overflow-y-auto z-[101]"
+            x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-300" x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full">
 
-                    {{-- Panel Trượt --}}
-                    <div class="pointer-events-auto w-screen max-w-xs" x-show="showSidebar"
-                        x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700"
-                        x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-                        x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700"
-                        x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
-
-                        <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
-                            <div class="px-4 py-6 sm:px-6 bg-indigo-600">
-                                <div class="flex items-start justify-between">
-                                    <h2 class="text-lg font-bold text-white" id="slide-over-title">Danh mục sản phẩm
-                                    </h2>
-                                    <div class="ml-3 flex h-7 items-center">
-                                        <button type="button"
-                                            class="rounded-md text-indigo-200 hover:text-white focus:outline-none"
-                                            @click="showSidebar = false">
-                                            <span class="sr-only">Close panel</span>
-                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Nội dung danh mục (Lấy từ AppServiceProvider) --}}
-                            <div class="relative mt-6 flex-1 px-4 sm:px-6">
-                                <nav class="space-y-2">
-                                    @foreach($menuCategories ?? [] as $cat)
-                                        {{-- Cast to object safely --}}
-                                        @php $cat = (object) $cat; @endphp
-
-                                        <div x-data="{ openSub: false }">
-                                            <div class="flex justify-between items-center group">
-                                                {{-- LINK TO CATEGORY PAGE --}}
-                                                <a href="{{ route('category.show', $cat->slug) }}"
-                                                    class="flex items-center gap-3 py-3 text-base font-medium text-gray-900 hover:text-indigo-600 flex-1">
-                                                    <span
-                                                        class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                                                        {{ substr($cat->name, 0, 1) }}
-                                                    </span>
-                                                    {{ $cat->name }}
-                                                </a>
-
-                                                {{-- Check Children --}}
-                                                @php
-                                                    $hasChildren = false;
-                                                    if (isset($cat->children) && $cat->children instanceof \Illuminate\Support\Collection) {
-                                                        $hasChildren = $cat->children->isNotEmpty();
-                                                    } elseif (isset($cat->children) && is_array($cat->children)) {
-                                                        $hasChildren = count($cat->children) > 0;
-                                                    }
-                                                @endphp
-
-                                                @if($hasChildren)
-                                                    <button @click="openSub = !openSub"
-                                                        class="p-2 text-gray-400 hover:text-indigo-600">
-                                                        <i data-lucide="chevron-down"
-                                                            class="w-4 h-4 transition-transform duration-200"
-                                                            :class="openSub ? 'rotate-180' : ''"></i>
-                                                    </button>
-                                                @endif
-                                            </div>
-
-                                            @if($hasChildren)
-                                                <div x-show="openSub" x-collapse class="pl-11 space-y-2 pb-2">
-                                                    @foreach($cat->children as $child)
-                                                        @php $child = (object) $child; @endphp
-                                                        <a href="{{ route('category.show', $child->slug) }}"
-                                                            class="block py-1 text-sm text-gray-500 hover:text-indigo-600">
-                                                            {{ $child->name }}
-                                                        </a>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="border-b border-gray-100 my-1"></div>
-                                    @endforeach
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="p-4 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+                <span class="font-bold text-lg text-gray-800 flex items-center gap-2"><i data-lucide="menu"
+                        class="w-5 h-5"></i> Menu</span>
+                <button @click="mobileMenuOpen = false" class="p-1 text-gray-500 hover:text-red-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
+
+            {{-- Mobile Search --}}
+            <div class="p-4 border-b border-gray-100">
+                <form action="/tim" method="get" class="relative">
+                    <input type="text" name="q" placeholder="Tìm kiếm sản phẩm..."
+                        class="w-full pl-4 pr-10 py-2.5 rounded-lg border border-gray-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-sm">
+                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+
+            {{-- Mobile Navigation --}}
+            <nav class="p-2 space-y-1">
+                @foreach($menuCategories ?? [] as $cat)
+                    @php $cat = (object) $cat; @endphp
+                    <div x-data="{ expanded: false }">
+                        <div
+                            class="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            <a href="{{ route('category.show', $cat->slug) }}"
+                                class="flex-1 font-medium text-gray-700 flex items-center gap-3">
+                                <span
+                                    class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">{{ substr($cat->name, 0, 1) }}</span>
+                                {{ $cat->name }}
+                            </a>
+                            @if(isset($cat->children) && count($cat->children) > 0)
+                                <button @click="expanded = !expanded" class="p-2 text-gray-400 hover:text-indigo-600">
+                                    <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200"
+                                        :class="expanded ? 'rotate-180' : ''"></i>
+                                </button>
+                            @endif
+                        </div>
+
+                        @if(isset($cat->children) && count($cat->children) > 0)
+                            <div x-show="expanded" x-collapse class="pl-11 space-y-1 bg-white mb-1">
+                                @foreach($cat->children as $child)
+                                    @php $child = (object) $child; @endphp
+                                    <a href="{{ route('category.show', $child->slug) }}"
+                                        class="block px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-md transition-colors">
+                                        {{ $child->name }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                <div class="border-t border-gray-100 my-2"></div>
+
+                <a href="/xdch"
+                    class="flex items-center px-3 py-3 font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i data-lucide="cpu" class="w-5 h-5 mr-3 text-gray-400"></i> Xây dựng cấu hình
+                </a>
+                <a href="/tin-tuc"
+                    class="flex items-center px-3 py-3 font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i data-lucide="newspaper" class="w-5 h-5 mr-3 text-gray-400"></i> Tin tức công nghệ
+                </a>
+            </nav>
         </div>
     </div>
 </div>
