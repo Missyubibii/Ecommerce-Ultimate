@@ -73,8 +73,36 @@
             </main>
         </div>
     </div>
+    {{-- Component Toast --}}
+    <x-toast />
 
+    {{-- Lucide Icons --}}
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 2. General Success Messages (e.g. Order success, Cart actions)
+            @if (session('success'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: "{{ session('success') }}", type: 'success' }
+                }));
+            @endif
+
+            // 3. General Error Messages
+            @if (session('error'))
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: "{{ session('error') }}", type: 'error' }
+                }));
+            @endif
+
+            // 4. Validation Errors (Optional: Show first error as toast)
+            @if ($errors->any())
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: { message: "{{ $errors->first() }}", type: 'error' }
+                }));
+            @endif
+        });
+    </script>
 
     {{-- REQUIRED: SERVER RESPONSE DEBUG SCRIPT --}}
     @if(session()->has('server_debug') || isset($server_debug))

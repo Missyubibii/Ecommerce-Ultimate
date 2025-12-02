@@ -7,7 +7,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row gap-6">
 
-            {{-- Sidebar Menu (Có thể tách ra component) --}}
+            {{-- Sidebar Menu --}}
             <div class="w-full md:w-1/4">
                 <div class="bg-white rounded-xl shadow-sm p-4 sticky top-24">
                     <div class="flex items-center gap-3 mb-6 p-2">
@@ -58,20 +58,24 @@
                                                 {{ $order->items->count() }} sản phẩm
                                             </div>
                                         </div>
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold
-                                            @if($order->status == 'completed') bg-green-100 text-green-700
-                                            @elseif($order->status == 'cancelled') bg-red-100 text-red-700
-                                            @else bg-yellow-100 text-yellow-800 @endif">
+
+                                        <span @class([
+                                            'px-3 py-1 rounded-full text-xs font-bold',
+                                            'bg-green-100 text-green-700' => $order->status == 'completed',
+                                            'bg-red-100 text-red-700' => $order->status == 'cancelled',
+                                            'bg-yellow-100 text-yellow-800' => !in_array($order->status, ['completed', 'cancelled']),
+                                        ])>
                                             {{ ucfirst($order->status) }}
                                         </span>
                                     </div>
 
-                                    {{-- Preview Items (Hiển thị 2 món đầu) --}}
+                                    {{-- Preview Items --}}
                                     <div class="space-y-2 mb-4">
                                         @foreach($order->items->take(2) as $item)
                                             <div class="flex gap-3 text-sm">
                                                 <div class="w-10 h-10 bg-gray-100 rounded border flex-shrink-0 overflow-hidden">
-                                                    <img src="{{ $item->product_snapshot['image'] ?? 'https://placehold.co/50' }}" class="w-full h-full object-cover">
+                                                    <img src="{{ !empty($item->product_snapshot['image']) ? asset('storage/' . $item->product_snapshot['image']) : 'https://placehold.co/50' }}"
+                                                        class="w-full h-full object-cover">
                                                 </div>
                                                 <div class="flex-1">
                                                     <p class="font-medium text-gray-800 truncate">{{ $item->product_name }}</p>
@@ -93,9 +97,10 @@
                                             <a href="{{ route('customer.orders.show', $order->id) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                                                 Xem chi tiết
                                             </a>
+
                                             @if($order->status == 'pending')
                                                 <form action="{{ route('customer.orders.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn này?')">
-                                                    @csrf @method('PATCH')
+                                                    @csrf
                                                     <button class="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition">
                                                         Hủy đơn
                                                     </button>

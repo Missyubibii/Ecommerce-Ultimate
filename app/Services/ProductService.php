@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\ProductImage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +13,20 @@ use Illuminate\Http\UploadedFile;
 class ProductService
 {
     // Các key không lưu trực tiếp vào bảng products mà cần xử lý riêng
-    protected const NON_DB_KEYS = ['gallery', 'category_ids', 'specs', 'specifications', 'stock_locations', 'stock_locations_input', 'image'];
+    protected const NON_DB_KEYS = [
+        'gallery',
+        'category_ids',
+        'specs',
+        'specifications',
+        'stock_locations',
+        'stock_locations_input',
+        'image',
+        'image_colors',
+        'images_data',      // JSON cấu trúc ảnh
+        'deleted_image_ids' // Array ID ảnh xóa
+    ];
+
+    // --- ADMIN METHODS ---
 
     public function listing(array $filters, int $perPage = 10)
     {
@@ -48,19 +62,20 @@ class ProductService
     public function create(array $data): Product
     {
         return DB::transaction(function () use ($data) {
-            // 1. Chuẩn bị dữ liệu
             $fillableData = $this->prepareData($data);
 
-            // 2. Xử lý ảnh đại diện
-            if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-                $fillableData['image'] = $data['image']->store('products', 'public');
+            // LOGIC CREATE: Lấy file đầu làm avatar
+            $galleryFiles = $data['gallery'] ?? [];
+
+            if (!empty($galleryFiles) && is_array($galleryFiles) && count($galleryFiles) > 0) {
+                if ($galleryFiles[0] instanceof UploadedFile) {
+                    $fillableData['image'] = $galleryFiles[0]->store('products', 'public');
+                }
             }
 
-            // 3. Tạo Product
             $product = Product::create($fillableData);
 
-            // 4. Xử lý Gallery
-            $this->handleGalleryUpload($product, $data['gallery'] ?? null);
+            $this->handleGalleryUpload($product, $galleryFiles);
 
             return $product;
         });
@@ -69,22 +84,62 @@ class ProductService
     public function update(Product $product, array $data): Product
     {
         return DB::transaction(function () use ($product, $data) {
-            // 1. Chuẩn bị dữ liệu
             $fillableData = $this->prepareData($data, $product);
 
-            // 2. Xử lý ảnh đại diện (Xóa cũ, thêm mới)
-            if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-                if ($product->image) {
-                    Storage::disk('public')->delete($product->image);
-                }
-                $fillableData['image'] = $data['image']->store('products', 'public');
-            }
-
-            // 3. Cập nhật Product
             $product->update($fillableData);
 
-            // 4. Xử lý Gallery (Thêm mới)
-            $this->handleGalleryUpload($product, $data['gallery'] ?? null);
+            // 1. Xóa các ảnh đã bị user remove khỏi UI
+            if (!empty($data['deleted_image_ids']) && is_array($data['deleted_image_ids'])) {
+                $imagesToDelete = ProductImage::whereIn('id', $data['deleted_image_ids'])
+                    ->where('product_id', $product->id)
+                    ->get();
+                foreach ($imagesToDelete as $img) {
+                    Storage::disk('public')->delete($img->path);
+                    $img->delete();
+                }
+            }
+
+            // 2. Xử lý Sắp xếp & Upload mới dựa trên 'images_data'
+            if (!empty($data['images_data'])) {
+                $imagesStructure = json_decode($data['images_data'], true);
+                $newFiles = $data['gallery'] ?? [];
+
+                if (is_array($imagesStructure)) {
+                    foreach ($imagesStructure as $index => $item) {
+                        $color = ($item['color'] === '' || $item['color'] === 'null') ? null : $item['color'];
+
+                        // Ảnh cũ
+                        if (!empty($item['id'])) {
+                            ProductImage::where('id', $item['id'])
+                                ->where('product_id', $product->id)
+                                ->update([
+                                    'sort_order' => $index,
+                                    'color' => $color
+                                ]);
+                        }
+                        // Ảnh mới
+                        else {
+                            $fileIndex = $item['new_file_index'] ?? -1;
+                            if (isset($newFiles[$fileIndex]) && $newFiles[$fileIndex] instanceof UploadedFile) {
+                                $path = $newFiles[$fileIndex]->store('products/gallery', 'public');
+                                $product->images()->create([
+                                    'path' => $path,
+                                    'sort_order' => $index,
+                                    'color' => $color
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Đồng bộ lại Avatar
+            $firstImage = $product->images()->orderBy('sort_order', 'asc')->first();
+            if ($firstImage) {
+                $product->update(['image' => $firstImage->path]);
+            } else {
+                $product->update(['image' => null]);
+            }
 
             return $product;
         });
@@ -93,11 +148,9 @@ class ProductService
     public function delete(Product $product): bool
     {
         if ($product->image) Storage::disk('public')->delete($product->image);
-
         foreach ($product->images as $img) {
             Storage::disk('public')->delete($img->path);
         }
-
         return $product->delete();
     }
 
@@ -107,12 +160,9 @@ class ProductService
             foreach ($imageIds as $index => $id) {
                 $product->images()->where('id', $id)->update(['sort_order' => $index]);
             }
-
-            // Ảnh đầu tiên trong gallery sẽ làm ảnh đại diện (Logic tùy chọn)
+            // Sync avatar
             $firstImage = $product->images()->orderBy('sort_order', 'asc')->first();
-            if ($firstImage) {
-                $product->update(['image' => $firstImage->path]);
-            }
+            if ($firstImage) $product->update(['image' => $firstImage->path]);
 
             return true;
         });
@@ -125,7 +175,26 @@ class ProductService
 
     public function getAllIds(array $filters): array
     {
-        return Product::pluck('id')->toArray(); // Có thể apply filter vào đây nếu cần chính xác hơn
+        return Product::pluck('id')->toArray();
+    }
+
+    // --- FRONTEND / PUBLIC METHODS ---
+
+    /**
+     * Lấy danh sách sản phẩm gợi ý bán chạy nhất (Active only)
+     * Dùng cho trang Search khi không có kết quả hoặc Homepage
+     */
+    public function getBestSellingSuggestions(int $limit = 4)
+    {
+        // Kiểm tra xem cột sold_count có tồn tại không để tránh lỗi SQL
+        $sortColumn = \Illuminate\Support\Facades\Schema::hasColumn('products', 'sold_count') ? 'sold_count' : 'created_at';
+
+        return Product::query()
+            ->with(['category', 'product_images']) // Eager load để tránh lỗi N+1 query
+            ->where('status', 'active')            // Chỉ lấy sản phẩm đang bán
+            ->orderBy($sortColumn, 'desc')         // Sắp xếp giảm dần
+            ->take($limit)                       
+            ->get();
     }
 
     public function findActiveBySlug(string $slug)
@@ -133,7 +202,7 @@ class ProductService
         return Product::where('slug', $slug)
             ->where('status', 'active')
             ->with(['category', 'images' => function ($q) {
-                $q->orderBy('sort_order');
+                $q->orderBy('sort_order', 'asc');
             }])
             ->firstOrFail();
     }
@@ -187,44 +256,39 @@ class ProductService
 
     private function prepareData(array $data, ?Product $product = null): array
     {
-        // Auto generate slug & SKU
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(4);
         }
-        if (empty($data['sku']) && !$product) { // Chỉ tạo SKU mới khi create
+        if (empty($data['sku']) && !$product) {
             $data['sku'] = 'SKU-' . strtoupper(Str::random(8));
         }
 
-        // Xử lý JSON Metadata (Specs & Locations)
         $metadata = $product ? ($product->metadata ?? []) : [];
 
         if (isset($data['specifications'])) {
-            $metadata['specs'] = is_string($data['specifications'])
-                ? json_decode($data['specifications'], true)
-                : $data['specifications'];
-        }
-
-        if (isset($data['stock_locations'])) {
-            $data['stock_locations'] = is_string($data['stock_locations'])
-                ? json_decode($data['stock_locations'], true)
-                : $data['stock_locations'];
-            // Lưu stock_locations vào metadata hoặc cột riêng tùy DB, giả sử vào metadata
-            $metadata['stock_locations'] = $data['stock_locations'];
+            $metadata['specs'] = is_string($data['specifications']) ? json_decode($data['specifications'], true) : $data['specifications'];
         }
 
         $data['metadata'] = $metadata;
 
-        // Lọc bỏ các key không phải cột DB
+        if (isset($data['colors'])) {
+            $data['colors'] = is_string($data['colors']) ? json_decode($data['colors'], true) : $data['colors'];
+        }
+
         return array_diff_key($data, array_flip(self::NON_DB_KEYS));
     }
 
     private function handleGalleryUpload(Product $product, $galleryFiles)
     {
         if (!empty($galleryFiles) && is_array($galleryFiles)) {
-            foreach ($galleryFiles as $file) {
+            $currentMaxSort = $product->images()->max('sort_order') ?? -1;
+            foreach ($galleryFiles as $index => $file) {
                 if ($file instanceof UploadedFile) {
                     $path = $file->store('products/gallery', 'public');
-                    $product->images()->create(['path' => $path]);
+                    $product->images()->create([
+                        'path' => $path,
+                        'sort_order' => $currentMaxSort + 1 + $index
+                    ]);
                 }
             }
         }

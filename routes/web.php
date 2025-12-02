@@ -28,6 +28,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// Search Routes
+Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
+
 // Product & Category Routes
 Route::get('/category/{slug}', [PublicProductController::class, 'category'])->name('category.show');
 Route::get('/product/{slug}', [PublicProductController::class, 'show'])->name('product.show');
@@ -35,6 +39,7 @@ Route::get('/product/{slug}', [PublicProductController::class, 'show'])->name('p
 // Cart Routes
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::post('/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.apply-coupon');
 Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 
@@ -42,10 +47,6 @@ Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout/place-order', [CheckoutController::class, 'store'])->name('order.place');
 Route::get('/checkout/thankyou/{id}', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
-
-// Search Routes
-Route::get('/search', [SearchController::class, 'index'])->name('search.index');
-Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
 // Static Pages
 // Route::view('/xdch', 'pages.build-pc')->name('build-pc');

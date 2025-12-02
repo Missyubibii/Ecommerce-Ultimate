@@ -32,9 +32,7 @@ class Product extends Model
         'colors',
         'unit',
         'min_stock',
-        'is_active',
         'is_featured',
-        'online_only'
     ];
 
     protected $casts = [
@@ -43,9 +41,8 @@ class Product extends Model
         'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
         'market_price' => 'decimal:2',
-        'is_active' => 'boolean',
         'is_featured' => 'boolean',
-        'online_only' => 'boolean',
+        'special_offer' => 'boolean',
     ];
 
     public function category(): BelongsTo

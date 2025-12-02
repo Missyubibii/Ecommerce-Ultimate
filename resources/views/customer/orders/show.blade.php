@@ -5,46 +5,50 @@
 @section('content')
     <div class="bg-gray-50 py-10 min-h-screen">
         <div class="max-w-5xl mx-auto px-4">
-
+            {{-- Breadcrumb --}}
             <div class="mb-6 flex items-center gap-2 text-sm text-gray-500">
                 <a href="{{ route('customer.orders.index') }}" class="hover:text-indigo-600">Đơn hàng của tôi</a>
                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 <span>#{{ $order->order_number }}</span>
             </div>
-
+            {{-- Success Message --}}
             @if(session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded">
                     {{ session('success') }}
                 </div>
             @endif
-
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
                 {{-- Left: Items & Status --}}
                 <div class="lg:col-span-2 space-y-6">
 
                     {{-- Status Card --}}
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4
-                        @if($order->status == 'completed') border-green-500
-                        @elseif($order->status == 'cancelled') border-red-500
-                        @else border-yellow-500 @endif">
+                    <div @class([
+                        'bg-white p-6 rounded-xl shadow-sm border-l-4',
+                        'border-green-500' => $order->status == 'completed',
+                        'border-red-500' => $order->status == 'cancelled',
+                        'border-yellow-500' => !in_array($order->status, ['completed', 'cancelled']),
+                    ])>
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="text-sm text-gray-500 uppercase tracking-wider">Trạng thái đơn hàng</p>
-                                <h2 class="text-xl font-bold mt-1
-                                    @if($order->status == 'completed') text-green-700
-                                    @elseif($order->status == 'cancelled') text-red-700
-                                    @else text-yellow-700 @endif">
+                                <h2 @class([
+                                    'text-xl font-bold mt-1',
+                                    'text-green-700' => $order->status == 'completed',
+                                    'text-red-700' => $order->status == 'cancelled',
+                                    'text-yellow-700' => !in_array($order->status, ['completed', 'cancelled']),
+                                ])>
                                     {{ ucfirst($order->status) }}
                                 </h2>
                                 <p class="text-sm text-gray-500 mt-1">Đặt ngày {{ $order->created_at->format('d/m/Y H:i') }}
                                 </p>
                             </div>
+
+                            {{-- Nút Hủy (Chỉ hiện khi pending) --}}
                             @if($order->status == 'pending')
                                 <form action="{{ route('customer.orders.cancel', $order->id) }}" method="POST"
                                     onsubmit="return confirm('Hủy đơn hàng?')">
-                                    @csrf @method('PATCH')
-                                    <button
+                                    @csrf
+                                    <button type="submit"
                                         class="text-red-600 border border-red-200 px-4 py-2 rounded hover:bg-red-50 transition text-sm">
                                         Hủy đơn hàng
                                     </button>
@@ -62,7 +66,7 @@
                             @foreach($order->items as $item)
                                 <div class="p-4 flex gap-4">
                                     <div class="w-20 h-20 border rounded bg-gray-100 flex-shrink-0 overflow-hidden">
-                                        <img src="{{ $item->product_snapshot['image'] ?? 'https://placehold.co/100' }}"
+                                        <img src="{{ !empty($item->product_snapshot['image']) ? asset('storage/' . $item->product_snapshot['image']) : 'https://placehold.co/100' }}"
                                             class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex-1">

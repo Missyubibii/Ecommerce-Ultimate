@@ -13,13 +13,15 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Custom Animation for Marquee -->
     <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
         @keyframes marquee {
             0% {
                 transform: translateX(100%);
@@ -66,44 +68,143 @@
         </main>
 
         <!-- Page Footer -->
-        <footer class="bg-gray-900 text-gray-300 py-10 mt-auto">
-            <div class="container mx-auto px-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div>
-                        <h3 class="text-white font-bold text-lg mb-4">Về chúng tôi</h3>
-                        <p class="text-sm">Chuyên cung cấp máy tính, linh kiện điện tử chính hãng với giá tốt nhất thị
-                            trường.</p>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-bold text-lg mb-4">Chính sách</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li><a href="#" class="hover:text-white">Bảo hành</a></li>
-                            <li><a href="#" class="hover:text-white">Đổi trả</a></li>
-                            <li><a href="#" class="hover:text-white">Vận chuyển</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-bold text-lg mb-4">Liên hệ</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li>Hotline: 1900 1000</li>
-                            <li>Email: support@example.com</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-bold text-lg mb-4">Theo dõi</h3>
-                        <div class="flex space-x-4">
-                            <!-- Social Icons placeholder -->
-                            <a href="#"
-                                class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-indigo-600 transition"><i
-                                    data-lucide="facebook" class="w-4 h-4"></i></a>
-                            <a href="#"
-                                class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-pink-600 transition"><i
-                                    data-lucide="instagram" class="w-4 h-4"></i></a>
+        <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 font-sans mt-auto">
+            <div class="border-b border-slate-800 bg-slate-950">
+                <div class="container mx-auto px-4 py-10">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-indigo-600/20 rounded-full text-indigo-500">
+                                <i data-lucide="mail" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-lg">Đăng ký nhận tin</h3>
+                                <p class="text-sm text-slate-400">Nhận thông tin khuyến mãi mới nhất từ chúng tôi.</p>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-auto flex-1 max-w-lg">
+                            <form class="flex gap-2">
+                                <input type="email" placeholder="Địa chỉ email của bạn..."
+                                    class="w-full px-4 py-3 rounded-lg bg-slate-900 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder:text-slate-500 outline-none transition-all">
+                                <button
+                                    class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors whitespace-nowrap">
+                                    Đăng ký
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
-                <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-                    &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+            </div>
+
+            <div class="container mx-auto px-4 py-12 md:py-16">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                    <div class="space-y-4">
+                        <a href="/" class="flex items-center gap-2 mb-4">
+                            <div class="bg-indigo-600 text-white p-1.5 rounded-lg">
+                                <i data-lucide="cpu" class="w-5 h-5"></i>
+                            </div>
+                            <span class="text-xl font-bold text-white tracking-tight">ULTIMATE<span
+                                    class="text-indigo-500">STORE</span></span>
+                        </a>
+                        <p class="text-sm leading-relaxed text-slate-400">
+                            Hệ thống bán lẻ các sản phẩm công nghệ chính hãng hàng đầu Việt Nam. Cam kết chất lượng, giá
+                            cả cạnh tranh và dịch vụ hậu mãi tốt nhất.
+                        </p>
+                        <div class="flex gap-3 pt-2">
+                            <a href="#"
+                                class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all"><i
+                                    data-lucide="facebook" class="w-4 h-4"></i></a>
+                            <a href="#"
+                                class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all"><i
+                                    data-lucide="instagram" class="w-4 h-4"></i></a>
+                            <a href="#"
+                                class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"><i
+                                    data-lucide="youtube" class="w-4 h-4"></i></a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold text-base mb-6 relative inline-block">
+                            Về Chúng Tôi
+                            <span class="absolute -bottom-2 left-0 w-1/2 h-0.5 bg-indigo-600"></span>
+                        </h4>
+                        <ul class="space-y-3 text-sm">
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Giới thiệu công
+                                    ty</a></li>
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Hệ thống cửa
+                                    hàng</a></li>
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Tuyển dụng</a>
+                            </li>
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Tin tức công
+                                    nghệ</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold text-base mb-6 relative inline-block">
+                            Chính Sách
+                            <span class="absolute -bottom-2 left-0 w-1/2 h-0.5 bg-indigo-600"></span>
+                        </h4>
+                        <ul class="space-y-3 text-sm">
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Chính sách bảo
+                                    hành</a></li>
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Chính sách đổi
+                                    trả</a></li>
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Hướng dẫn thanh
+                                    toán</a></li>
+                            <li><a href="#" class="hover:text-indigo-400 transition-colors flex items-center gap-2"><i
+                                        data-lucide="chevron-right" class="w-3 h-3 text-slate-600"></i> Chính sách bảo
+                                    mật</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold text-base mb-6 relative inline-block">
+                            Liên Hệ
+                            <span class="absolute -bottom-2 left-0 w-1/2 h-0.5 bg-indigo-600"></span>
+                        </h4>
+                        <ul class="space-y-4 text-sm">
+                            <li class="flex items-start gap-3">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Tầng 5, Tòa nhà Techno, Quận Cầu Giấy, Hà Nội.</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i data-lucide="phone" class="w-5 h-5 text-indigo-500 flex-shrink-0"></i>
+                                <span class="font-bold text-white text-lg">1900 6789</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i data-lucide="mail" class="w-5 h-5 text-indigo-500 flex-shrink-0"></i>
+                                <a href="mailto:support@ultimate.vn"
+                                    class="hover:text-white transition-colors">support@ultimate.vn</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 py-6 border-t border-slate-800">
+                <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p class="text-xs text-slate-500 text-center md:text-left">
+                        &copy; {{ date('Y') }} Ultimate Store. All rights reserved. Design by Laravel Team.
+                    </p>
+                    <div
+                        class="flex items-center gap-4 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                        <div
+                            class="h-6 w-10 bg-slate-700 rounded flex items-center justify-center text-[10px] font-bold">
+                            VISA</div>
+                        <div
+                            class="h-6 w-10 bg-slate-700 rounded flex items-center justify-center text-[10px] font-bold">
+                            MOMO</div>
+                        <div
+                            class="h-6 w-10 bg-slate-700 rounded flex items-center justify-center text-[10px] font-bold">
+                            COD</div>
+                    </div>
                 </div>
             </div>
         </footer>

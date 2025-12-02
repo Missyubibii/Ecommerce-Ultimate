@@ -1,165 +1,144 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
-@section('title', 'Quản lý Giỏ hàng')
-@section('header', 'Giỏ hàng đang hoạt động')
+@section('title', 'Đơn hàng của tôi')
 
+@section('content')
+{{-- Khai báo từ điển trạng thái --}}
 @php
-    $initialData = [
-        'search' => request('q', ''), // Tìm theo User ID hoặc Session ID
+    $statusLabels = [
+        'pending' => 'Chờ xử lý',
+        'processing' => 'Đang xử lý',
+        'shipped' => 'Đang giao hàng',
+        'completed' => 'Hoàn thành',
+        'cancelled' => 'Đã hủy',
+        'refunded' => 'Đã hoàn tiền'
     ];
 @endphp
 
-@section('content')
-<div x-data="cartIndexPage(@js($initialData))" class="p-6 bg-white rounded-xl shadow-lg">
+<div class="bg-gray-50 py-10 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row gap-6">
 
-    {{-- Header Section --}}
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Quản lý Giỏ hàng</h1>
-            <div class="mt-2 flex items-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                    <span class="text-sm text-gray-600">Tổng giỏ hàng: {{ $carts->total() }}</span>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                    <span class="text-sm text-gray-600">Khách vãng lai: {{ $carts->whereNull('user_id')->count() }}</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- Nút xóa hàng loạt (Nếu có logic sau này) --}}
-        {{-- <button ... class="bg-red-600 ...">Dọn dẹp giỏ rác</button> --}}
-    </div>
-
-    {{-- Filter Bar --}}
-    <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div class="flex flex-wrap items-center gap-4">
-            <div class="flex-1 min-w-[250px]">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </span>
-                    <input type="text" x-model="search" @keyup.enter="applyFilters()" placeholder="Tìm email, session ID..."
-                        class="pl-10 w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
+            {{-- Sidebar Menu --}}
+            <div class="w-full md:w-1/4">
+                <div class="bg-white rounded-xl shadow-sm p-4 sticky top-24">
+                    <div class="flex items-center gap-3 mb-6 p-2">
+                        <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff" class="w-12 h-12 rounded-full">
+                        <div>
+                            <p class="text-xs text-gray-500">Tài khoản của</p>
+                            <p class="font-bold text-gray-900">{{ Auth::user()->name }}</p>
+                        </div>
+                    </div>
+                    <nav class="space-y-1">
+                        <a href="{{ route('customer.orders.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium bg-indigo-50 text-indigo-700 rounded-lg">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            Đơn mua
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            Tài khoản
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                Đăng xuất
+                            </button>
+                        </form>
+                    </nav>
                 </div>
             </div>
 
-            <button @click="applyFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300">
-                Lọc
-            </button>
-            <a href="{{ route('admin.carts.index') }}" class="text-gray-500 hover:text-gray-700 text-sm underline">Xóa lọc</a>
-        </div>
-    </div>
+            {{-- Main Content --}}
+            <div class="flex-1">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h1 class="text-xl font-bold text-gray-900">Đơn hàng của tôi</h1>
+                    </div>
 
-    {{-- Flash Message --}}
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg shadow-sm flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            {{ session('success') }}
-        </div>
-    @endif
-
-    {{-- Table --}}
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Chủ sở hữu</th>
-                        <th class="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">Loại khách</th>
-                        <th class="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">Số lượng SP</th>
-                        <th class="px-6 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider">Giá trị</th>
-                        <th class="px-6 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider">Cập nhật cuối</th>
-                        <th class="px-6 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    @forelse($carts as $cart)
-                        <tr class="hover:bg-gray-50 transition duration-150 ease-in-out group">
-                            <td class="px-6 py-4">
-                                @if($cart->user_id)
-                                    <div class="flex items-center">
-                                        <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs mr-3">
-                                            {{ substr($cart->user->name ?? 'U', 0, 1) }}
-                                        </div>
+                    @if($orders->count() > 0)
+                        <div class="divide-y divide-gray-100">
+                            @foreach($orders as $order)
+                                <div class="p-6 hover:bg-gray-50 transition">
+                                    <div class="flex justify-between items-start mb-4">
                                         <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ $cart->user->name ?? 'Unknown' }}</div>
-                                            <div class="text-xs text-gray-500">{{ $cart->user->email ?? '' }}</div>
-                                        </div>
-                                    </div>
-                                @else
-                                    <div class="flex items-center">
-                                        <div class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-xs mr-3">
-                                            G
-                                        </div>
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900 italic">Khách vãng lai</div>
-                                            <div class="text-[10px] text-gray-400 font-mono truncate w-32" title="{{ $cart->session_id }}">
-                                                {{ $cart->session_id }}
+                                            <div class="flex items-center gap-3">
+                                                <span class="font-mono font-bold text-indigo-600">#{{ $order->order_number }}</span>
+                                                <span class="text-xs text-gray-500">{{ $order->created_at->format('d/m/Y H:i') }}</span>
+                                            </div>
+                                            <div class="mt-1 text-sm text-gray-600">
+                                                {{ $order->items->count() }} sản phẩm
                                             </div>
                                         </div>
+
+                                        {{-- Hiển thị trạng thái tiếng Việt --}}
+                                        <span @class([
+                                            'px-3 py-1 rounded-full text-xs font-bold',
+                                            'bg-green-100 text-green-700' => $order->status == 'completed',
+                                            'bg-red-100 text-red-700' => $order->status == 'cancelled',
+                                            'bg-yellow-100 text-yellow-800' => !in_array($order->status, ['completed', 'cancelled']),
+                                        ])>
+                                            {{ $statusLabels[$order->status] ?? ucfirst($order->status) }}
+                                        </span>
                                     </div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $cart->user_id ? 'bg-indigo-100 text-indigo-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                    {{ $cart->user_id ? 'Thành viên' : 'Vãng lai' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="font-bold text-gray-800">{{ $cart->total_quantity }}</span>
-                                <span class="text-gray-500 text-xs">({{ $cart->distinct_items }} loại)</span>
-                            </td>
-                            <td class="px-6 py-4 text-right font-bold text-gray-900">
-                                {{ number_format($cart->cart_total, 0, ',', '.') }}đ
-                            </td>
-                            <td class="px-6 py-4 text-right text-xs text-gray-500">
-                                {{ \Carbon\Carbon::parse($cart->last_updated)->diffForHumans() }}
-                            </td>
-                            <td class="px-6 py-4 text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('admin.carts.show', ['user_id' => $cart->user_id, 'session_id' => $cart->session_id]) }}"
-                                        class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition-colors text-xs uppercase font-bold">
-                                        Chi tiết
-                                    </a>
-                                    {{-- Nút xóa nhanh nếu cần --}}
+
+                                    {{-- Preview Items --}}
+                                    <div class="space-y-2 mb-4">
+                                        @foreach($order->items->take(2) as $item)
+                                            <div class="flex gap-3 text-sm">
+                                                <div class="w-10 h-10 bg-gray-100 rounded border flex-shrink-0 overflow-hidden">
+                                                    {{-- Sửa link ảnh storage --}}
+                                                    <img src="{{ !empty($item->product_snapshot['image']) ? asset('storage/' . $item->product_snapshot['image']) : 'https://placehold.co/50' }}" class="w-full h-full object-cover">
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p class="font-medium text-gray-800 truncate">{{ $item->product_name }}</p>
+                                                    <p class="text-gray-500">x{{ $item->quantity }}</p>
+                                                </div>
+                                                <div class="font-medium">{{ number_format($item->subtotal, 0, ',', '.') }}đ</div>
+                                            </div>
+                                        @endforeach
+                                        @if($order->items->count() > 2)
+                                            <p class="text-xs text-gray-500 pl-14">+ {{ $order->items->count() - 2 }} sản phẩm khác</p>
+                                        @endif
+                                    </div>
+
+                                    <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+                                        <div class="text-sm">
+                                            Tổng tiền: <span class="text-lg font-bold text-red-600">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <a href="{{ route('customer.orders.show', $order->id) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                                Xem chi tiết
+                                            </a>
+
+                                            @if($order->status == 'pending')
+                                                <form action="{{ route('customer.orders.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn này?')">
+                                                    @csrf
+                                                    <button class="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition">
+                                                        Hủy đơn
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                                <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                    <p class="text-lg font-medium text-gray-900">Không có giỏ hàng nào</p>
-                                    <p class="text-sm text-gray-500 mt-1">Hiện tại không có khách hàng nào đang giữ hàng trong giỏ.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            @endforeach
+                        </div>
+                        <div class="p-6">
+                            {{ $orders->links() }}
+                        </div>
+                    @else
+                        <div class="text-center py-16">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                                <i data-lucide="shopping-bag" class="w-8 h-8 text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900">Chưa có đơn hàng nào</h3>
+                            <a href="{{ route('home') }}" class="mt-4 inline-block text-indigo-600 hover:underline">Mua sắm ngay</a>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="mt-6">
-        {{ $carts->withQueryString()->links() }}
-    </div>
 </div>
-
-{{-- Alpine Script --}}
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('cartIndexPage', (init) => ({
-            search: init.search,
-            applyFilters() {
-                let params = new URLSearchParams(window.location.search);
-                if (this.search) params.set('q', this.search); else params.delete('q');
-                params.delete('page');
-                window.location.search = params.toString();
-            }
-        }));
-    });
-</script>
 @endsection

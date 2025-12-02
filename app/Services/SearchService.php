@@ -92,13 +92,26 @@ class SearchService
         if (empty(trim($partial))) return collect([]);
 
         return Product::query()
+            ->select('id', 'name', 'slug', 'price') // Lấy thêm trường cần thiết, metadata chứa ảnh nếu có
+            ->with('product_images') // Eager load ảnh để tránh N+1 query
             ->where('status', 'active')
             ->where(function ($q) use ($partial) {
                 $q->where('name', 'like', "%{$partial}%")
                     ->orWhere('slug', 'like', '%' . \Illuminate\Support\Str::slug($partial) . '%');
             })
             ->limit(5)
-            ->pluck('name');
+            ->get()
+            ->map(function ($product) {
+                // Format lại dữ liệu cho gọn khi trả về JSON
+                return [
+                    'name' => $product->name,
+                    'url' => route('product.show', $product->slug),
+                    'price' => number_format((float)($product->price ?? 0), 0, ',', '.') . 'đ',
+                    'image' => $product->product_images->first()?->path
+                        ? asset('storage/' . $product->product_images->first()->path)
+                        : asset('images/no-image.jpg'),
+                ];
+            });
     }
 
     public function getTrendingKeywords(int $limit = 5)
@@ -126,4 +139,5 @@ class SearchService
 
         LogSearchHistory::dispatch($logData);
     }
+    
 }

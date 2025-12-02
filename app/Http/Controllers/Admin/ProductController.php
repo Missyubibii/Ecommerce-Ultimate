@@ -54,9 +54,8 @@ class ProductController extends Controller implements HasMiddleware
     {
         $data = $this->validateProduct($request);
 
-        // Xử lý boolean checkbox
-        $data['is_active'] = $request->boolean('is_active');
         $data['is_featured'] = $request->boolean('is_featured');
+        $data['special_offer'] = $request->boolean('special_offer');
         $data['online_only'] = $request->boolean('online_only');
 
         $product = $this->productService->create($data);
@@ -80,9 +79,14 @@ class ProductController extends Controller implements HasMiddleware
 
     public function update(Request $request, Product $product)
     {
+        // 1. Validate cơ bản
         $data = $this->validateProduct($request, $product->id);
 
-        $data['is_active'] = $request->boolean('is_active');
+        // 2. Lấy thêm các trường dữ liệu phục vụ xử lý ảnh phức tạp (JSON từ JS gửi lên)
+        $data['images_data'] = $request->input('images_data');
+        $data['deleted_image_ids'] = $request->input('deleted_image_ids');
+
+        // 3. Map boolean
         $data['is_featured'] = $request->boolean('is_featured');
         $data['special_offer'] = $request->boolean('special_offer');
         $data['online_only'] = $request->boolean('online_only');
@@ -130,26 +134,36 @@ class ProductController extends Controller implements HasMiddleware
         return response()->json(['success' => true, 'message' => 'Images reordered successfully.']);
     }
 
-    /**
-     * Shared Validation Logic
-     */
     private function validateProduct(Request $request, $id = null)
     {
-        return $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'sku' => 'nullable|string|unique:products,sku,' . $id,
-            'image' => 'nullable|image|max:2048',
-            'gallery.*' => 'image|max:2048',
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'specifications' => 'nullable|string',
             'stock_locations' => 'nullable|string',
             'market_price' => 'nullable|numeric|min:0',
             'warranty' => 'nullable|string|max:255',
-            'special_offer' => 'nullable|string',
-        ]);
+            'colors' => 'nullable|string',
+            'images_data' => 'nullable|string',
+            'deleted_image_ids' => 'nullable|array',
+        ];
+
+        // Logic Gallery:
+        // - Create: Bắt buộc upload
+        // - Edit: Không bắt buộc upload, nhưng nếu xóa hết ảnh cũ thì phải upload mới (logic này có thể handle ở JS hoặc service).
+        if (!$id) {
+            $rules['gallery'] = 'required|array|min:1';
+            $rules['gallery.*'] = 'image|max:2048';
+        } else {
+            $rules['gallery'] = 'nullable|array';
+            $rules['gallery.*'] = 'image|max:2048';
+        }
+
+        return $request->validate($rules);
     }
 }

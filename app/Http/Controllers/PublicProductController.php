@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ProductService;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class PublicProductController extends Controller
@@ -52,15 +53,18 @@ class PublicProductController extends Controller
         $productData = $product->toArray();
 
         // Thêm logic "Related Products" (Sản phẩm liên quan - cùng danh mục)
-        $related = \App\Models\Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id) // Loại trừ sản phẩm hiện tại
             ->where('status', 'active')
-            ->take(4)
+            // TỐI ƯU Ở ĐÂY: Eager load category để tránh N+1 query trong view
+            ->with('category')
+            ->inRandomOrder()
+            ->take(4) // Giới hạn số lượng
             ->get();
 
         $response = [
             'product' => $productData,
-            'related' => $related
+            'related' => $relatedProducts
         ];
 
         if ($request->wantsJson()) {
