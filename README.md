@@ -233,41 +233,54 @@ composer install
 
 # Cài đặt Frontend dependencies
 npm install
+```
 
 **Bước 2: Cấu hình môi trường**
+```bash
 cp .env.example .env
 php artisan key:generate
-` Mở file .env và cấu hình thông tin Database (DB_DATABASE, DB_USERNAME, DB_PASSWORD).`
+```
+Mở file .env và cấu hình thông tin Database (DB_DATABASE, DB_USERNAME, DB_PASSWORD).
+
 
 **Bước 3: Khởi tạo Database & Dữ liệu mẫu**
+```bash
 # Chạy migration và seeder (Tạo User, Category, Product mẫu)
 php artisan migrate --seed
-`Lệnh này sẽ chạy DatabaseSeeder, tự động gọi RealProductSeeder để tạo dữ liệu sản phẩm giả lập như thật.`
+```
+Lệnh này sẽ chạy `DatabaseSeeder`, tự động gọi `RealProductSeeder` để tạo dữ liệu sản phẩm giả lập như thật.
 
 **Bước 4: Tải ảnh sản phẩm mẫu (Tool hỗ trợ)** Dự án tích hợp sẵn công cụ tự động tải ảnh từ internet cho các sản phẩm mẫu:
+```bash
 php artisan app:download-product-images
-`Command này được định nghĩa tại app/Console/Commands/DownloadProductImages.php.`
+```
+Command này được định nghĩa tại `app/Console/Commands/DownloadProductImages.php.`
 
 **Bước 5: Chạy ứng dụng**
+```bash
 # Build Frontend assets (TailwindCSS/Vite)
 npm run build
 
 # Khởi chạy Server
 php artisan serve
+```
 
 ###6.3. Tài khoản Demo mặc định
 (Được tạo bởi DatabaseSeeder)
+```bash
 * **Administrator:**
     * **Email:** admin@gmail.com
     * **Password:** 123123123
 * **Customer:**
     * **Email:** user@gmail.com
     * **Password:** 123123123
+```
 
 ###6.4. Các lệnh hữu ích khác
+```bash
 * **npm run dev:** Chạy Vite server (Hot Reload) để phát triển Frontend.
 
 * **php artisan telescope:** install: Cài đặt Telescope để debug request/query.
-
+```
 ---
 © 2025 Laravel E-Commerce Ultimate. Built with ❤️ by MissyUbibii.
