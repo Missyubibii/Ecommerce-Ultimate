@@ -20,13 +20,15 @@ class CartController extends Controller
 
     public function index(Request $request)
     {
-        $cartData = $this->cartService->getCartTotals();
+        $userId = Auth::id();
+        $sessionId = $request->session()->getId();
+        $cartData = $this->cartService->getCart($userId, $sessionId);
 
         $debug = [
             'module' => 'Cart',
             'action' => 'View',
-            'item_count' => $cartData['count'],
-            'total' => $cartData['subtotal']
+            'item_count' => $cartData['count'] ?? 0,
+            'total' => $cartData['subtotal'] ?? 0
         ];
 
         if ($request->wantsJson()) {
@@ -51,24 +53,24 @@ class CartController extends Controller
         ]);
 
         try {
-            // 1. Lấy thông tin User và Session
             $userId = auth::id();
             $sessionId = $request->session()->getId();
 
-            // 2. Truyền đủ 4 tham số theo thứ tự định nghĩa trong Service
+            // Thêm vào giỏ
             $this->cartService->addToCart(
-                $userId,                    // Tham số 1
-                $sessionId,                 // Tham số 2
-                $request->product_id,       // Tham số 3 (productId)
-                $request->input('quantity', 1) // Tham số 4
+                $userId,
+                $sessionId,
+                $request->product_id,
+                $request->input('quantity', 1)
             );
 
-            // 3. Truyền userId và sessionId vào getCartTotals để lấy đúng giỏ hàng
-            $cartData = $this->cartService->getCartTotals($userId, $sessionId);
+            // Lấy lại toàn bộ giỏ hàng để cập nhật UI
+            $cartData = $this->cartService->getCart($userId, $sessionId);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Đã thêm vào giỏ hàng',
+                'data' => $cartData,
                 'cart_count' => $cartData['count'],
                 'debug' => ['module' => 'Cart', 'action' => 'Add']
             ]);
@@ -80,13 +82,11 @@ class CartController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $this->cartService->updateQuantity($id, $request->quantity);
-
-            $cartData = $this->cartService->getCartTotals();
+            $cartData = $this->cartService->updateQty($id, $request->quantity);
 
             return response()->json([
                 'success' => true,
-                'data' => $cartData, // Trả full data để client re-render list
+                'data' => $cartData,
                 'debug' => ['module' => 'Cart', 'action' => 'UpdateQty']
             ]);
         } catch (\Exception $e) {
@@ -97,8 +97,7 @@ class CartController extends Controller
     public function remove(Request $request, $id)
     {
         try {
-            $this->cartService->removeItem($id);
-            $cartData = $this->cartService->getCartTotals();
+            $cartData = $this->cartService->removeItem($id);
 
             return response()->json([
                 'success' => true,
@@ -115,15 +114,14 @@ class CartController extends Controller
         $request->validate(['code' => 'required|string|max:20']);
 
         try {
-            // 1. Lấy tổng tiền (chỉ của các sản phẩm hợp lệ)
-            $cartData = $this->cartService->getCartTotals();
+            $userId = Auth::id();
+            $sessionId = $request->session()->getId();
+            $cartData = $this->cartService->getCart($userId, $sessionId);
 
-            // Nếu giỏ hàng rỗng hoặc không có sản phẩm hợp lệ
-            if ($cartData['subtotal'] == 0) {
+            if (($cartData['subtotal'] ?? 0) == 0) {
                 throw new \Exception("Giỏ hàng chưa đủ điều kiện áp dụng mã.");
             }
 
-            // 2. Gọi CouponService để áp dụng mã
             $couponDetails = $this->couponService->applyCoupon($request->code, $cartData['subtotal']);
 
             return response()->json([

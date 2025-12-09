@@ -7,6 +7,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PublicProductController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\ChatController;
+
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
@@ -18,6 +20,8 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\SearchReportController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\AdminChatController;
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,6 +51,11 @@ Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout/place-order', [CheckoutController::class, 'store'])->name('order.place');
 Route::get('/checkout/thankyou/{id}', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
+
+// AI Chatbot Routes
+Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+Route::get('/chat/history', [ChatController::class, 'getHistory'])->name('chat.history');
+Route::delete('/chat/history', [ChatController::class, 'clearHistory'])->name('chat.clear');
 
 // Static Pages
 // Route::view('/xdch', 'pages.build-pc')->name('build-pc');
@@ -141,7 +150,12 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('banners', BannerController::class);
 
         // Search Reports Management
+        // Search Reports Management
         Route::get('/search-reports', [SearchReportController::class, 'index'])->name('search_reports.index');
+
+        // Chat History
+        Route::get('/chat-history', [AdminChatController::class, 'index'])->name('chat.index');
+        Route::get('/chat-history/{id}', [AdminChatController::class, 'show'])->name('chat.show');
     });
 
 require __DIR__ . '/auth.php';

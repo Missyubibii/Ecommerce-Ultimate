@@ -19,7 +19,8 @@ class CartService
      */
     public function getCart($userId = null, $sessionId = null)
     {
-        $query = CartItem::with(['product.product_images']);
+        // 1. Chỉ cần with('product') vì cột 'image' nằm ngay trong bảng products
+        $query = CartItem::with(['product']);
 
         if ($userId) {
             $query->where('user_id', $userId);
@@ -28,19 +29,71 @@ class CartService
         }
 
         $items = $query->get();
-
-        // Tính toán tổng tiền động
         $subtotal = 0;
-        foreach ($items as $item) {
-            // Giá ưu tiên: market_price nếu cần, ở đây dùng price
-            $price = $item->product->price ?? 0;
-            $item->current_price = $price;
-            $item->total = $price * $item->quantity;
-            $subtotal += $item->total;
-        }
+
+        $items->each(function ($item) use (&$subtotal) {
+            $product = $item->product;
+
+            $img = $product->image;
+            $finalImageUrl = 'https://placehold.co/100?text=No+Image'; // Mặc định
+
+            if (!empty($img)) {
+                if (filter_var($img, FILTER_VALIDATE_URL)) {
+                    // 1. Nếu là link online (http...)
+                    $finalImageUrl = $img;
+                } elseif (file_exists(public_path($img))) {
+                    // 2. Nếu file nằm trực tiếp trong folder public/ (VD: public/images/...)
+                    $finalImageUrl = asset($img);
+                } else {
+                    // 3. Nếu không tìm thấy ở public, thử tìm trong storage (VD: public/storage/images/...)
+                    // Code này tự động thêm 'storage/' nếu đường dẫn trong DB chưa có
+                    $pathWithStorage = str_starts_with($img, 'storage/') ? $img : 'storage/' . $img;
+                    $finalImageUrl = asset($pathWithStorage);
+                }
+            }
+            $item->product->image = $finalImageUrl;
+
+            // Mặc định là OK
+            $item->is_available = true;
+            $item->message = '';
+
+            // Check 1: Sản phẩm không tồn tại
+            if (!$product) {
+                $item->is_available = false;
+                $item->message = 'Sản phẩm không tồn tại';
+                return; // Dừng check, không tính tiền
+            }
+
+            // Check 2: Trạng thái (Dựa trên status='active' và is_active=1)
+            if ($product->status !== 'active' || $product->is_active != 1) {
+                $item->is_available = false;
+                $item->message = 'Ngừng kinh doanh';
+            }
+
+            // Check 3: Hết hàng (quantity = 0)
+            elseif ($product->quantity <= 0) {
+                $item->is_available = false;
+                $item->message = 'Đã hết hàng';
+            }
+
+            // Check 4: Mua quá số lượng kho
+            elseif ($item->quantity > $product->quantity) {
+                $item->is_available = false;
+                $item->message = "Kho chỉ còn {$product->quantity} chiếc.";
+            }
+
+            // Tính tiền
+            $item->total = ($product->price ?? 0) * $item->quantity;
+
+            // Chỉ cộng tổng tiền nếu sản phẩm HỢP LỆ (is_available = true)
+            if ($item->is_available) {
+                $subtotal += $item->total;
+            }
+        });
 
         return [
             'items' => $items,
+            // Đếm tổng số lượng (bao gồm cả hàng lỗi để khách thấy mà xóa)
             'count' => $items->sum('quantity'),
             'subtotal' => $subtotal
         ];
@@ -68,7 +121,6 @@ class CartService
         $cartItem = $query->first();
 
         if ($cartItem) {
-            // Update quantity
             $cartItem->quantity += $quantity;
             $cartItem->save();
         } else {
@@ -105,25 +157,6 @@ class CartService
         $userId = Auth::id();
         $sessionId = Session::getId();
         return $this->getCart($userId, $sessionId);
-    }
-
-    /**
-     * Lấy tổng quan giỏ hàng (Số lượng, Tổng tiền)
-     * Thường dùng cho Mini Cart header hoặc AJAX response
-     */
-    public function getCartTotals($userId = null, $sessionId = null)
-    {
-        // Tái sử dụng getCart để đảm bảo logic tính giá (ưu tiên giá mới nhất từ DB) giống nhau
-        // Nếu muốn tối ưu hiệu năng hơn (không load ảnh), có thể viết query riêng
-        $cartData = $this->getCart($userId, $sessionId);
-
-        return [
-            'count' => $cartData['count'],
-            'subtotal' => $cartData['subtotal'],
-            // Tại đây có thể mở rộng logic tính Tax, Discount, Shipping nếu cần
-            'total' => $cartData['subtotal'],
-            'formatted_subtotal' => number_format($cartData['subtotal'], 0, ',', '.') . 'đ'
-        ];
     }
 
     /**

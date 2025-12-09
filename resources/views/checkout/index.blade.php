@@ -4,7 +4,6 @@
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Thanh toán</h1>
 
-        {{-- Hiển thị lỗi nếu có --}}
         @if($errors->any())
             <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
                 <ul class="list-disc pl-5 text-red-700">
@@ -15,12 +14,17 @@
             </div>
         @endif
 
+        {{-- Logic tự động mở tab "Địa chỉ mới" nếu có dữ liệu từ Chatbot --}}
+        @php
+            $hasAiData = !empty($prefill['address']);
+            $defaultTab = (count($addresses) > 0 && !$hasAiData) ? 'existing' : 'new';
+        @endphp
+
         <form action="{{ route('order.place') }}" method="POST" class="flex flex-col lg:flex-row gap-8" id="checkoutForm">
             @csrf
 
             <div class="w-full lg:w-2/3 space-y-6">
 
-                {{-- GUEST EMAIL & LOGIN PROMPT --}}
                 @guest
                     <div class="bg-white p-6 shadow rounded-lg">
                         <div class="flex justify-between items-center mb-4">
@@ -35,11 +39,21 @@
                     </div>
                 @endguest
 
-                <div class="bg-white p-6 shadow rounded-lg" x-data="{ addressOption: '{{ count($addresses) > 0 ? 'existing' : 'new' }}' }">
+                {{-- Sử dụng biến $defaultTab đã tính toán ở trên --}}
+                <div class="bg-white p-6 shadow rounded-lg" x-data="{ addressOption: '{{ $defaultTab }}' }">
                     <h2 class="text-lg font-bold mb-4 flex items-center">
                         <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-2">1</span>
                         Địa chỉ nhận hàng
                     </h2>
+
+                    @if($hasAiData)
+                        <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Thông tin đã được điền tự động từ cuộc trò chuyện với AI.
+                        </div>
+                    @endif
 
                     @auth
                         @if(count($addresses) > 0)
@@ -54,7 +68,6 @@
                                 </label>
                             </div>
 
-                            {{-- List Address --}}
                             <div x-show="addressOption === 'existing'" class="space-y-3 mb-4 pl-6">
                                 @foreach($addresses as $addr)
                                     <label class="flex items-start p-3 border rounded cursor-pointer hover:bg-gray-50 {{ $loop->first ? 'border-indigo-200 bg-indigo-50' : '' }}">
@@ -69,31 +82,35 @@
                         @endif
                     @endauth
 
-                    {{-- New Address Form --}}
+                    {{-- Form nhập địa chỉ mới (Có Pre-fill từ $prefill) --}}
                     <div x-show="addressOption === 'new'" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Họ tên người nhận *</x-input-label>
-                            <x-text-input name="new_address[full_name]" class="w-full mt-1" value="{{ optional($user)->name }}" />
+                            {{-- Pre-fill tên --}}
+                            <x-text-input name="new_address[full_name]" class="w-full mt-1" value="{{ old('new_address.full_name', $prefill['name']) }}" required />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Số điện thoại *</x-input-label>
-                            <x-text-input name="new_address[phone]" class="w-full mt-1" value="{{ optional($user)->phone }}" />
+                            {{-- Pre-fill SĐT --}}
+                            <x-text-input name="new_address[phone]" class="w-full mt-1" value="{{ old('new_address.phone', $prefill['phone']) }}" required />
                         </div>
                         <div class="col-span-2">
                             <x-input-label>Địa chỉ (Số nhà, tên đường) *</x-input-label>
-                            <x-text-input name="new_address[address_line1]" class="w-full mt-1" placeholder="Ví dụ: 123 Nguyễn Trãi" />
+                            {{-- Pre-fill Địa chỉ --}}
+                            <x-text-input name="new_address[address_line1]" class="w-full mt-1" value="{{ old('new_address.address_line1', $prefill['address']) }}" placeholder="Ví dụ: 123 Nguyễn Trãi" required />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Tỉnh / Thành phố *</x-input-label>
-                            <x-text-input name="new_address[city]" class="w-full mt-1" />
+                            <x-text-input name="new_address[city]" class="w-full mt-1" required />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Quận / Huyện</x-input-label>
-                            <x-text-input name="new_address[state]" class="w-full mt-1" /> {{-- Tạm dùng field state --}}
+                            <x-text-input name="new_address[state]" class="w-full mt-1" />
                         </div>
                     </div>
                 </div>
 
+                {{-- Phần Thanh toán giữ nguyên --}}
                 <div class="bg-white p-6 shadow rounded-lg">
                     <h2 class="text-lg font-bold mb-4 flex items-center">
                         <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-2">2</span>
@@ -132,7 +149,8 @@
                             <div class="py-3 flex justify-between text-sm">
                                 <div class="flex gap-3">
                                     <div class="relative">
-                                        <img src="{{ $item->product->image_url }}" class="w-10 h-10 rounded object-cover border">
+                                        {{-- FIX LỖI ẢNH: Sử dụng $item->product->image thay vì image_url --}}
+                                        <img src="{{ $item->product->image }}" class="w-10 h-10 rounded object-cover border">
                                         <span class="absolute -top-1 -right-1 bg-gray-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full">{{ $item->quantity }}</span>
                                     </div>
                                     <div>

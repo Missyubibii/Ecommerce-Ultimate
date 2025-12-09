@@ -7,7 +7,6 @@ use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
 class CheckoutController extends Controller
 {
     protected $cartService;
@@ -21,7 +20,9 @@ class CheckoutController extends Controller
 
     public function index(Request $request)
     {
-        $cartData = $this->cartService->getCartTotals();
+        $userId = Auth::id();
+        $sessionId = $request->session()->getId();
+        $cartData = $this->cartService->getCart($userId, $sessionId);
 
         if ($cartData['count'] == 0) {
             return redirect()->route('cart.index')->with('error', 'Giỏ hàng trống');
@@ -29,6 +30,14 @@ class CheckoutController extends Controller
 
         $user = Auth::user();
         $addresses = $user ? $user->addresses : [];
+
+        $aiInfo = session('ai_checkout_info');
+
+        $prefill = [
+            'name' => $aiInfo['name'] ?? ($user->name ?? ''),
+            'phone' => $aiInfo['phone'] ?? ($user->phone ?? ''),
+            'address' => $aiInfo['address'] ?? '',
+        ];
 
         $debug = [
             'module' => 'Checkout',
@@ -41,24 +50,20 @@ class CheckoutController extends Controller
             'cart' => $cartData,
             'addresses' => $addresses,
             'user' => $user,
+            'prefill' => $prefill, // Truyền biến này sang View
             'server_debug' => $debug
         ]);
     }
 
-    /**
-     * Xử lý đặt hàng (POST /checkout/place-order)
-     */
     public function store(Request $request)
     {
         $user = Auth::user();
 
-        // 1. Validate Dynamic
         $rules = [
             'payment_method' => 'required|in:cod,banking',
             'address_id' => 'nullable|exists:addresses,id',
         ];
 
-        // Nếu là Guest hoặc User chọn "Địa chỉ mới", bắt buộc nhập thông tin
         if (!$user || !$request->input('address_id')) {
             $rules['new_address.full_name'] = 'required|string|max:255';
             $rules['new_address.phone'] = 'required|string|max:20';
@@ -66,7 +71,6 @@ class CheckoutController extends Controller
             $rules['new_address.city'] = 'required|string|max:100';
         }
 
-        // Nếu là Guest, bắt buộc phải có Email để gửi đơn hàng
         if (!$user) {
             $rules['email'] = 'required|email|max:255';
         }
@@ -74,15 +78,15 @@ class CheckoutController extends Controller
         $request->validate($rules);
 
         try {
-            // 2. Merge Guest Email vào payload nếu có
             $payload = $request->all();
             if (!$user && $request->has('email')) {
-                // Lưu email guest vào metadata hoặc shipping address để liên hệ
                 $payload['guest_email'] = $request->email;
             }
 
-            // 3. Gọi Service xử lý
             $order = $this->orderService->placeOrder($user, $payload);
+
+            // Xóa session chatbot sau khi đặt hàng thành công
+            session()->forget('ai_checkout_info');
 
             $debug = [
                 'module' => 'Order',
@@ -105,7 +109,6 @@ class CheckoutController extends Controller
                 ->with('server_debug', $debug);
         } catch (\Exception $e) {
             $debug = ['module' => 'Order', 'action' => 'PlaceOrder', 'status' => 'Failed', 'error' => $e->getMessage()];
-
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage(), 'debug' => $debug], 422);
             }
@@ -113,20 +116,13 @@ class CheckoutController extends Controller
         }
     }
 
-    /**
-     * Trang Cảm ơn (GET /checkout/thankyou/{id})
-     */
     public function thankyou(Request $request, $id)
     {
         $order = \App\Models\Order::with('items')->findOrFail($id);
-
-        // Security check đơn giản: Nếu là user login, phải đúng chủ sở hữu
         if (Auth::check() && $order->user_id !== Auth::id()) {
             abort(403);
         }
-
         $debug = ['module' => 'Order', 'action' => 'ViewThankYou', 'order_number' => $order->order_number];
-
         return view('checkout.thankyou', [
             'order' => $order,
             'server_debug' => $debug

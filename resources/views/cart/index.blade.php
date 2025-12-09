@@ -68,7 +68,7 @@
                             </div>
 
                             {{-- Item Loop --}}
-                            <template x-for="item in cart.items" :key="item.id">
+                            <template x-for="item in (cart.items ? Object.values(cart.items) : [])" :key="item.id">
                                 <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-4 items-center group transition-colors border-b border-gray-50 last:border-0"
                                     :class="{'bg-red-50/50': !item.is_available, 'hover:bg-gray-50': item.is_available}">
 
@@ -281,8 +281,11 @@
 
                 // [COMPUTED] Kiểm tra xem có được phép Checkout không
                 get isCheckoutDisabled() {
-                    // Disable nếu giỏ trống HOẶC có bất kỳ item nào bị lỗi (hết hàng/không tồn tại)
-                    return this.cart.count === 0 || this.cart.items.some(item => !item.is_available);
+                    // Ép kiểu về mảng để tránh lỗi nếu PHP trả về Object
+                    const items = this.cart.items ? (Array.isArray(this.cart.items) ? this.cart.items : Object.values(this.cart.items)) : [];
+
+                    // Disable nếu giỏ trống, tổng tiền = 0, hoặc có sản phẩm lỗi (màu đỏ)
+                    return this.cart.count === 0 || this.cart.subtotal === 0 || items.some(item => item.is_available === false);
                 },
 
                 // Format tiền Việt Nam

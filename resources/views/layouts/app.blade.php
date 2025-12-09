@@ -250,6 +250,9 @@
     {{-- Component Toast --}}
     <x-toast />
 
+    {{-- Chat Widget --}}
+    @include('partials.chat-widget')
+
     {{-- Script để lắng nghe Flash Message từ Session PHP --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {

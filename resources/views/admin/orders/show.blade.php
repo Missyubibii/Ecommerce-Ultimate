@@ -30,10 +30,8 @@
             @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
                 {{-- CỘT TRÁI: DANH SÁCH SẢN PHẨM & QUẢN LÝ VẬN CHUYỂN --}}
                 <div class="lg:col-span-2 space-y-6">
-
                     {{-- 1. Danh sách sản phẩm (Items) --}}
                     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
                         <div
@@ -203,7 +201,6 @@
 
                 {{-- CỘT PHẢI: TRẠNG THÁI & THANH TOÁN --}}
                 <div class="lg:col-span-1 space-y-6">
-
                     {{-- 3. Trạng thái Đơn hàng (Module F) --}}
                     <div
                         class="bg-white shadow sm:rounded-lg p-6 border-t-4 {{ $order->status === 'completed' ? 'border-green-500' : ($order->status === 'cancelled' ? 'border-red-500' : 'border-indigo-500') }}">
