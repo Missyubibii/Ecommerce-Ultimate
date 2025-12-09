@@ -277,9 +277,11 @@ php artisan serve
 
 **6.4. Các lệnh hữu ích khác**
 ```bash
-* **npm run dev:** Chạy Vite server (Hot Reload) để phát triển Frontend.
+#Chạy Vite server (Hot Reload) để phát triển Frontend.
+npm run dev
 
-* **php artisan telescope:** install: Cài đặt Telescope để debug request/query.
+#install: Cài đặt Telescope để debug request/query.
+php artisan telescope
 ```
 ---
 © 2025 Laravel E-Commerce Ultimate. Built with ❤️ by MissyUbibii.
