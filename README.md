@@ -265,18 +265,17 @@ npm run build
 php artisan serve
 ```
 
-###6.3. Tài khoản Demo mặc định
+**6.3. Tài khoản Demo mặc định**
 (Được tạo bởi DatabaseSeeder)
-```bash
+
 * **Administrator:**
     * **Email:** admin@gmail.com
     * **Password:** 123123123
 * **Customer:**
     * **Email:** user@gmail.com
     * **Password:** 123123123
-```
 
-###6.4. Các lệnh hữu ích khác
+**6.4. Các lệnh hữu ích khác**
 ```bash
 * **npm run dev:** Chạy Vite server (Hot Reload) để phát triển Frontend.
 
