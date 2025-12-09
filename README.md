@@ -284,4 +284,4 @@ npm run dev
 php artisan telescope
 ```
 ---
-© 2025 Laravel E-Commerce Ultimate. Built with ❤️ by MissyUbibii.
+© 2025 Laravel E-Commerce Ultimate. Built with ❤️ by Missyubibi.
