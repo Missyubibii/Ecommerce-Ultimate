@@ -15,10 +15,9 @@ API_KEYS = [k.strip() for k in API_KEYS_STR.split(',') if k.strip()]
 current_key_index = 0
 
 # --- CẤU HÌNH MODEL ---
-# Dùng flash để phản hồi nhanh, temperature thấp để bám sát dữ liệu
 MODEL_NAME = "gemini-flash-latest" 
 GENERATION_CONFIG = {
-    "temperature": 0.3, # Tăng nhẹ để văn phong tự nhiên hơn, nhưng vẫn kiểm soát tốt
+    "temperature": 0.3, 
     "top_p": 0.95,
     "top_k": 40,
     "max_output_tokens": 8192,
@@ -27,7 +26,7 @@ GENERATION_CONFIG = {
 
 # --- SYSTEM PROMPT CHUYÊN NGHIỆP ---
 SYSTEM_PROMPT_TEMPLATE = """
-Bạn là "Ultimate Assistant" - Chuyên viên tư vấn cấp cao của hệ thống Laravel E-Commerce Ultimate.
+Bạn là "Ultimate Assistant" - Chuyên viên tư vấn, Chăm sóc khách hàng cấp cao của hệ thống Laravel E-Commerce Ultimate.
 Bạn chuyên về các thiết bị công nghệ (Điện thoại, Laptop, PC, Phụ kiện).
 
 DỮ LIỆU SẢN PHẨM HIỆN CÓ (CONTEXT):
@@ -100,11 +99,11 @@ def process_chat():
         for msg in history:
             role_label = "Khách" if msg['sender'] == 'user' else "Bot"
             history_str += f"{role_label}: {msg['message']}\n"
-            # History cho Gemini object
+            # Lịch sử trò chuyện cho Gemini
             role = 'user' if msg['sender'] == 'user' else 'model'
             gemini_history.append({'role': role, 'parts': [msg['message']]})
 
-        # Inject dữ liệu vào Prompt
+        # Thêm dữ liệu vào Prompt
         context_str = json.dumps(products_context, ensure_ascii=False, indent=2)
         system_instruction = SYSTEM_PROMPT_TEMPLATE.replace("{products_context}", context_str)
         system_instruction = system_instruction.replace("{chat_history}", history_str)
@@ -128,7 +127,7 @@ def process_chat():
 
             except exceptions.ResourceExhausted:
                 wait_time = 2 ** (attempt + 1)
-                print(f"⚠️ Quota exceeded. Rotating key and waiting {wait_time}s...")
+                print(f"⚠️ Lượt truy cập quá nhiều. Vui lòng đợi {wait_time} giây...")
                 rotate_key()
                 time.sleep(wait_time)
                 attempt += 1

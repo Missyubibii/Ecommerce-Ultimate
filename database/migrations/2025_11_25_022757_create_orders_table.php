@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('order_number')->unique(); // VD: ORD20251126-XH512
+            $table->string('order_number')->unique();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
 
             $table->enum('status', [
@@ -27,11 +26,10 @@ return new class extends Migration
             ])->default('pending')->index();
             $table->decimal('total_amount', 12, 2);
             $table->decimal('shipping_amount', 12, 2)->default(0);
-            $table->string('payment_method'); // cod, banking, etc.
-            // Snapshot địa chỉ tại thời điểm đặt (tránh user sửa profile làm sai lệch đơn cũ)
+            $table->string('payment_method');
             $table->json('shipping_address');
             $table->json('billing_address')->nullable();
-            $table->json('metadata')->nullable(); // Chứa note, coupon code, v.v.
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
     }

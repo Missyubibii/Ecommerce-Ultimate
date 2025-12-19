@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('key')->unique();
             $table->text('value')->nullable();
-            $table->string('type')->default('text'); // text, boolean, json, image
-            $table->string('group')->default('general'); // general, payment, shipping
+            $table->string('type')->default('text');
+            $table->string('group')->default('general');
             $table->string('label')->nullable();
             $table->timestamps();
         });

@@ -6,8 +6,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Address;
-use App\Models\Payment;  // Module G
-use App\Models\Shipment; // Module H
+use App\Models\Payment;
+use App\Models\Shipment;
 use App\Models\CartItem;
 use App\Services\CartService;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +42,7 @@ class OrderService
         // 3. Bắt đầu Transaction (Atomic)
         return DB::transaction(function () use ($user, $items, $payload, $cartData, $shippingAddress) {
 
-            // A. Trừ kho (Module C logic)
+            // A. Trừ kho
             foreach ($items as $cartItem) {
                 // Lock dòng product để tránh race condition
                 $product = Product::where('id', $cartItem->product_id)->lockForUpdate()->first();
@@ -51,8 +51,6 @@ class OrderService
                 if ($product->quantity < $cartItem->quantity) throw new Exception("Sản phẩm '{$product->name}' không đủ hàng.");
 
                 $product->quantity -= $cartItem->quantity;
-                // Nếu hết hàng, có thể set status = draft hoặc out_of_stock tùy logic
-                // if ($product->quantity === 0) $product->status = 'draft';
                 $product->save();
             }
 
@@ -72,7 +70,7 @@ class OrderService
                 ]
             ]);
 
-            // C. Tạo Order Items (Module F)
+            // C. Tạo Order Items
             foreach ($items as $item) {
                 $order->items()->create([
                     'product_id' => $item->product_id,
@@ -88,7 +86,7 @@ class OrderService
                 ]);
             }
 
-            // D. Tạo Payment (Module G) - Init: pending
+            // D. Tạo Payment- Init: pending
             Payment::create([
                 'order_id' => $order->id,
                 'method' => $payload['payment_method'] ?? 'cod',
@@ -96,11 +94,11 @@ class OrderService
                 'status' => 'pending'
             ]);
 
-            // E. Tạo Shipment (Module H) - Init: pending
+            // E. Tạo Shipment - Init: pending
             Shipment::create([
                 'order_id' => $order->id,
                 'status' => 'pending',
-                'cost' => 0 // Chi phí vận chuyển thực tế (shop chịu hoặc khách chịu)
+                'cost' => 0
             ]);
 
             // F. Dọn dẹp giỏ hàng (Module D)

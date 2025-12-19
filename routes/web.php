@@ -57,10 +57,6 @@ Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.se
 Route::get('/chat/history', [ChatController::class, 'getHistory'])->name('chat.history');
 Route::delete('/chat/history', [ChatController::class, 'clearHistory'])->name('chat.clear');
 
-// Static Pages
-// Route::view('/xdch', 'pages.build-pc')->name('build-pc');
-// Route::view('/tin-tuc', 'pages.news')->name('news');
-
 /*
 |--------------------------------------------------------------------------
 | 2. USER ROUTES (CUSTOMER DASHBOARD) - MODULE A
@@ -108,9 +104,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Reset User Password
         Route::patch('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
-        // Bulk Delete Users
         Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
-        // User Management
         Route::resource('users', UserController::class);
 
         // Category Management

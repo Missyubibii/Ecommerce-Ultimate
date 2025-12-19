@@ -200,8 +200,17 @@ class CartService
         }
     }
 
+    public function getCartTotals($identifier): float
+    {
+        // Luôn join với bảng products để lấy giá mới nhất
+        // Tránh trường hợp sản phẩm đã đổi giá nhưng trong giỏ vẫn lưu giá cũ
+        return CartItem::where($identifier)
+            ->join('products', 'cart_items.product_id', '=', 'products.id')
+            ->sum(DB::raw('cart_items.quantity * products.price'));
+    }
+
     // =========================================================================
-    // SECTION 2: ADMIN METHODS (Phục vụ CartController bạn cung cấp)
+    // SECTION 2: ADMIN METHODS
     // =========================================================================
 
     /**

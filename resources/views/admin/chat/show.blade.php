@@ -146,7 +146,6 @@
         <script src="https://unpkg.com/lucide@latest"></script>
         <script>
             lucide.createIcons();
-            // Tự động cuộn xuống cuối khi vào trang
             const chatContainer = document.getElementById('chat-container');
             if (chatContainer) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -189,27 +188,24 @@
                     let isHeader = true;
 
                     rows.forEach((row, index) => {
-                        // Bỏ qua dòng phân cách |---|---|
                         if (row.includes('---')) {
                             isHeader = false;
                             return;
                         }
 
-                        // Tách các ô (cells) bằng dấu | và lọc bỏ phần rỗng ở đầu/cuối
                         const cells = row.split('|').filter(cell => cell.trim() !== '');
 
                         if (index === 0) {
-                            // Header Row
+                            // Cột tiêu đề
                             html += '<thead class="bg-indigo-50 text-indigo-700 font-bold uppercase text-xs"><tr>';
                             cells.forEach(cell => {
                                 html += `<th class="px-3 py-2 border-b border-indigo-100">${cell.trim()}</th>`;
                             });
                             html += '</tr></thead><tbody class="divide-y divide-gray-100 bg-white">';
                         } else {
-                            // Body Row
+                            // Cột thông tin
                             html += '<tr class="hover:bg-gray-50 transition">';
                             cells.forEach((cell, i) => {
-                                // Cột đầu tiên in đậm nhẹ để làm tiêu đề hàng
                                 const cellClass = i === 0 ? 'font-medium text-gray-900' : 'text-gray-600';
                                 html += `<td class="px-3 py-2 ${cellClass}">${cell.trim()}</td>`;
                             });

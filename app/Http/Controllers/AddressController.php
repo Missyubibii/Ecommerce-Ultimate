@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class AddressController extends Controller
 {
+    /**
+     * @var UserService
+     */
     protected UserService $userService;
 
     public function __construct(UserService $userService)
@@ -17,11 +20,11 @@ class AddressController extends Controller
     }
 
     /**
-     * Store a new address.
+     * Thêm địa chỉ mới.
      */
     public function store(Request $request)
     {
-        // 1. Validate
+        // 1. Kiểm tra dữ liệu
         $data = $request->validate([
             'full_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
@@ -34,34 +37,36 @@ class AddressController extends Controller
             'is_default' => 'boolean'
         ]);
 
-        // 2. Call Service
+        // 2. Gọi Service
         $address = $this->userService->createAddress($request->user(), $data);
 
-        // 3. Debug Metadata [cite: 28]
+        // 3. Debug Metadata
         $debug = [
             'module' => 'Address',
             'action' => 'Create',
             'address_id' => $address->id
         ];
 
-        // 4. Hybrid Response [cite: 35]
+        // 4. Trả về JSON
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'data' => $address, 'debug' => $debug]);
         }
 
+        // 5. Trả về view
         return back()->with('status', 'address-created')->with('server_debug', $debug);
     }
 
     /**
-     * Update an address.
+     * Cập nhật địa chỉ.
      */
     public function update(Request $request, Address $address)
     {
-        // Authorize: Ensure user owns this address
+        // 1. Kiểm tra quyền
         if ($request->user()->id !== $address->user_id) {
             abort(403);
         }
 
+        // 2. Kiểm tra dữ liệu
         $data = $request->validate([
             'full_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
@@ -74,32 +79,39 @@ class AddressController extends Controller
             'is_default' => 'boolean'
         ]);
 
+        // 3. Gọi Service
         $updatedAddress = $this->userService->updateAddress($address, $data);
 
+        // 4. Debug Metadata
         $debug = [
             'module' => 'Address',
             'action' => 'Update',
             'address_id' => $updatedAddress->id
         ];
 
+        // 5. Trả về JSON
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'data' => $updatedAddress, 'debug' => $debug]);
         }
 
+        // 6. Trả về view
         return back()->with('status', 'address-updated')->with('server_debug', $debug);
     }
 
     /**
-     * Delete an address.
+     * Xóa địa chỉ.
      */
     public function destroy(Request $request, Address $address)
     {
+        // 1. Kiểm tra quyền
         if ($request->user()->id !== $address->user_id) {
             abort(403);
         }
 
+        // 2. Gọi Service
         $this->userService->deleteAddress($address);
 
+        // 3. Trả về Json
         $debug = ['module' => 'Address', 'action' => 'Delete', 'id' => $address->id];
 
         if ($request->wantsJson()) {
@@ -129,3 +141,4 @@ class AddressController extends Controller
         return back()->with('server_debug', $debug);
     }
 }
+

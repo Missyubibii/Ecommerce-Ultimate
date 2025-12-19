@@ -5,7 +5,7 @@
 }" class="contents font-sans text-slate-800">
 
     {{-- 1. TOP BANNER (Swiper) --}}
-    <div class="relative bg-slate-900 h-10 overflow-hidden z-[60]">
+    <!-- <div class="relative bg-slate-900 h-10 overflow-hidden z-[60]">
         <div class="swiper-container h-full" id="top-banner-swiper">
             <div class="swiper-wrapper">
                 @forelse($headerBanners ?? [] as $banner)
@@ -27,7 +27,7 @@
                 @endforelse
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- 2. HOT LINKS BAR (Marquee) --}}
     <div class="bg-indigo-50/80 backdrop-blur-sm border-b border-indigo-100 hidden md:block relative z-[55]">

@@ -30,7 +30,7 @@ class ActivityLogService
     }
 
     /**
-     * [MỚI] Hàm ghi log thủ công từ Service khác
+     * Hàm ghi log thủ công từ Service khác
      * * @param string $description Mô tả hành động (vd: "Cập nhật cấu hình")
      * @param mixed $subject Model bị tác động (vd: Setting)
      * @param string $event Tên sự kiện (created, updated, deleted, login...)

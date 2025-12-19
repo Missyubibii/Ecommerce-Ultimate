@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -22,7 +21,6 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
         });
 
-        // Bảng tổng hợp từ khóa (để gợi ý nhanh/Trending)
         Schema::create('search_terms', function (Blueprint $table) {
             $table->id();
             $table->string('term')->unique();

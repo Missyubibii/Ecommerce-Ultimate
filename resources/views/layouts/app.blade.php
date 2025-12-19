@@ -20,8 +20,10 @@
 
     <!-- Custom Animation for Marquee -->
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
         @keyframes marquee {
             0% {
                 transform: translateX(100%);
