@@ -11,4 +11,9 @@ class Shipment extends Model
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime'
     ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }

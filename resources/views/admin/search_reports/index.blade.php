@@ -5,7 +5,7 @@
 @section('content')
     <div class="space-y-6">
         <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Search Analytics</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Báo cáo Tìm kiếm</h1>
             <button onclick="window.location.reload()" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
                 title="Tải lại trang">
                 <i data-lucide="refresh-cw" class="w-5 h-5"></i>

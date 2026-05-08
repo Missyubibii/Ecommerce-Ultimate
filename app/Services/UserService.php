@@ -86,7 +86,7 @@ class UserService
 
         // Nếu data có avatar là file upload
         if (isset($data['avatar']) && $data['avatar'] instanceof \Illuminate\Http\UploadedFile) {
-             $this->uploadAvatar($user, $data['avatar']);
+            $this->uploadAvatar($user, $data['avatar']);
         }
 
         $user->fill($fillableData);

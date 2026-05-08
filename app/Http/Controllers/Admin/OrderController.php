@@ -9,20 +9,33 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    /**
+     * Tạo instance của OrderService
+     * @var 
+     */
     protected $orderService;
 
+    /**
+     * Gán instance của OrderService
+     */
     public function __construct(OrderService $orderService)
     {
         $this->orderService = $orderService;
     }
 
+    /**
+     * Hiển thị danh sách đơn hàng
+     */
     public function index(Request $request)
     {
-        $filters = $request->only(['status', 'q', 'date_from', 'date_to']);
+        //Lấy các filter từ request
+        $filters = $request->only(['status', 'q', 'date_from', 'date_to', 'sort', 'direction']);
         $orders = $this->orderService->getAdminOrders($filters);
 
+        //Lấy các trạng thái đơn hàng
         $statuses = ['pending', 'paid', 'processing', 'shipped', 'completed', 'cancelled', 'refunded'];
 
+        //Debug
         $debug = [
             'module' => 'AdminOrder',
             'action' => 'List',
@@ -30,10 +43,12 @@ class OrderController extends Controller
             'filters' => $filters
         ];
 
+        //Hiển thị json
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'data' => $orders, 'debug' => $debug]);
         }
 
+        //Hiển thị view
         return view('admin.orders.index', [
             'orders' => $orders,
             'statuses' => $statuses,
@@ -42,17 +57,26 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * Hiển thị thông tin chi tiết đơn hàng
+     */
     public function show(Request $request, $id)
     {
+        //Lấy thông tin đơn hàng
         $order = $this->orderService->getOrderDetails($id);
+
+        //Lấy các trạng thái đơn hàng
         $statuses = ['pending', 'paid', 'processing', 'shipped', 'completed', 'cancelled', 'refunded'];
 
+        //Debug
         $debug = ['module' => 'AdminOrder', 'action' => 'Detail', 'order_id' => $id];
 
+        //Hiển thị json
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'data' => $order, 'debug' => $debug]);
         }
 
+        //Hiển thị view
         return view('admin.orders.show', [
             'order' => $order,
             'statuses' => $statuses,

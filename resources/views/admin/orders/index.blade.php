@@ -9,13 +9,43 @@
         'search' => request('q', ''),
         'statusFilter' => request('status', ''),
         'dateFrom' => request('date_from', ''),
+        'sortFilter' => request('sort') ? request('sort') . '_' . request('direction', 'desc') : '',
+    ];
+
+    // Ánh xạ trạng thái đơn hàng
+    $statusLabels = [
+        'pending' => 'Chờ xử lý',
+        'processing' => 'Đang chuẩn bị',
+        'shipped' => 'Đang giao',
+        'completed' => 'Hoàn thành',
+        'cancelled' => 'Đã hủy',
+        'refunded' => 'Hoàn tiền',
+        'failed' => 'Thất bại'
+    ];
+
+    // Ánh xạ trạng thái thanh toán
+    $paymentLabels = [
+        'pending' => 'Chưa thanh toán',
+        'paid' => 'Đã thanh toán',
+        'failed' => 'Thất bại',
+        'refunded' => 'Đã hoàn tiền'
+    ];
+
+    // Ánh xạ trạng thái vận chuyển
+    $shipmentLabels = [
+        'pending' => 'Chờ lấy hàng',
+        'picked_up' => 'Đã lấy hàng',
+        'in_transit' => 'Đang giao',
+        'delivered' => 'Đã giao',
+        'returned' => 'Hoàn trả',
+        'failed' => 'Thất bại'
     ];
 @endphp
 
 @section('content')
     <div x-data="orderIndexPage(@js($initialData))" class="p-6 bg-white rounded-xl shadow-lg">
 
-        {{-- Header --}}
+        {{-- Khối tiêu đề--}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Quản lý Đơn hàng</h1>
@@ -28,10 +58,10 @@
             </div>
         </div>
 
-        {{-- Filters Bar --}}
+        {{-- Khối bộ lọc tìm kiếm --}}
         <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div class="flex flex-wrap items-center gap-4">
-                {{-- Search --}}
+                {{-- Tìm kiếm theo mã đơn hàng --}}
                 <div class="flex-1 min-w-[200px]">
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
@@ -46,35 +76,48 @@
                     </div>
                 </div>
 
-                {{-- Status Filter --}}
+                {{-- Bộ lọc sắp xếp giá trị đơn hàng --}}
+                <div class="min-w-[180px]">
+                    <select x-model="sortFilter" @change="applyFilters()"
+                        class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">-- Sắp xếp --</option>
+                        <option value="created_at_desc">Mới nhất (Mặc định)</option>
+                        <option value="created_at_asc">Cũ nhất</option>
+                        <option value="total_amount_desc">Tổng tiền: Cao đến Thấp</option>
+                        <option value="total_amount_asc">Tổng tiền: Thấp đến Cao</option>
+                    </select>
+                </div>
+
+                {{-- Bộ lọc trạng thái đơn hàng --}}
                 <div class="min-w-[180px]">
                     <select x-model="statusFilter" @change="applyFilters()"
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Tất cả trạng thái --</option>
-                        @foreach($statuses as $st)
-                            <option value="{{ $st }}">{{ ucfirst($st) }}</option>
+                        @foreach($statusLabels as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                {{-- Date Filter --}}
+                {{-- Bộ lọc ngày tạo đơn hàng --}}
                 <div class="min-w-[150px]">
                     <input type="date" x-model="dateFrom" @change="applyFilters()"
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
                         title="Từ ngày">
                 </div>
 
-                {{-- Action Buttons --}}
+                {{-- Nút Lọc --}}
                 <button @click="applyFilters()"
                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300">
                     Lọc
                 </button>
+                {{-- Nút Xóa lọc --}}
                 <a href="{{ route('admin.orders.index') }}" class="text-gray-500 hover:text-gray-700 text-sm underline">Xóa
                     lọc</a>
             </div>
         </div>
 
-        {{-- Table --}}
+        {{-- Bảng đơn hàng --}}
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm divide-y divide-gray-200">
@@ -93,38 +136,55 @@
                     <tbody class="divide-y divide-gray-200">
                         @forelse($orders as $order)
                             <tr class="hover:bg-gray-50 transition">
+                                {{-- Mã đơn hàng --}}
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <a href="{{ route('admin.orders.show', $order->id) }}"
                                         class="font-bold text-indigo-600 hover:underline">
                                         #{{ $order->order_number }}
                                     </a>
                                 </td>
+
+                                {{-- Tên khách hàng --}}
                                 <td class="px-4 py-3">
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ $order->user ? $order->user->name : 'Khách vãng lai' }}</div>
+                                        {{ $order->user ? $order->user->name : 'Khách vãng lai' }}
+                                    </div>
                                     <div class="text-xs text-gray-500">{{ $order->shipping_address['full_name'] ?? '' }}</div>
                                 </td>
 
-                                {{-- Status Badges (Đồng bộ style) --}}
+                                {{-- Trạng thái đơn hàng --}}
                                 <td class="px-4 py-3 text-center">
                                     @php
                                         $stClass = match ($order->status) {
-                                            'completed', 'shipped' => 'bg-green-100 text-green-800',
-                                            'cancelled', 'refunded' => 'bg-red-100 text-red-800',
-                                            'processing' => 'bg-blue-100 text-blue-800',
-                                            default => 'bg-yellow-100 text-yellow-800'
+                                            'pending' => 'bg-yellow-100 text-yellow-800', // Chờ xử lý
+                                            'processing' => 'bg-blue-100 text-blue-800',   // Đang chuẩn bị hàng
+                                            'shipped' => 'bg-indigo-100 text-indigo-800', // Đang giao hàng
+                                            'completed' => 'bg-green-100 text-green-800',  // Hoàn thành
+                                            'cancelled' => 'bg-red-100 text-red-800',     // Đã hủy
+                                            'refunded' => 'bg-pink-100 text-pink-800',    // Đã hoàn tiền
+                                            'failed' => 'bg-gray-100 text-gray-800',    // Thất bại
+                                            default => 'bg-gray-100 text-gray-600'
                                         };
                                     @endphp
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $stClass }}">
-                                        {{ ucfirst($order->status) }}
+                                        {{ $statusLabels[$order->status] ?? $order->status }}
                                     </span>
                                 </td>
 
                                 <td class="px-4 py-3 text-center">
                                     @if($order->payment)
-                                        <span
-                                            class="px-2 py-1 text-xs font-semibold rounded-full {{ $order->payment->status == 'paid' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
-                                            {{ ucfirst($order->payment->status) }}
+                                        @php
+                                            // 1. Phân loại màu sắc cho 4 trạng thái thanh toán
+                                            $payClass = match ($order->payment->status) {
+                                                'paid' => 'bg-green-100 text-green-800',  // Đã thanh toán
+                                                'pending' => 'bg-yellow-100 text-yellow-800', // Chưa thanh toán
+                                                'failed' => 'bg-red-100 text-red-800',      // Thất bại
+                                                'refunded' => 'bg-purple-100 text-purple-800', // Đã hoàn tiền
+                                                default => 'bg-gray-100 text-gray-600'
+                                            };
+                                        @endphp
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $payClass }}">
+                                            {{ $paymentLabels[$order->payment->status] ?? $order->payment->status }}
                                         </span>
                                         <div class="text-[10px] uppercase text-gray-400 mt-1">{{ $order->payment->method }}</div>
                                     @else
@@ -134,9 +194,21 @@
 
                                 <td class="px-4 py-3 text-center">
                                     @if($order->shipment)
-                                        <span
-                                            class="px-2 py-1 text-xs font-semibold rounded-full {{ $order->shipment->status == 'delivered' ? 'bg-green-100 text-green-800' : 'bg-blue-50 text-blue-600' }}">
-                                            {{ ucfirst($order->shipment->status) }}
+                                        @php
+                                            // 1. Phân loại màu sắc cho các trạng thái vận chuyển
+                                            $shipClass = match ($order->shipment->status) {
+                                                'delivered' => 'bg-green-100 text-green-800',   // Đã giao hàng
+                                                'pending' => 'bg-yellow-100 text-yellow-800', // Chờ lấy hàng
+                                                'picked_up' => 'bg-blue-100 text-blue-800',     // Đã lấy hàng
+                                                'in_transit' => 'bg-indigo-100 text-indigo-800', // Đang giao
+                                                'returned' => 'bg-purple-100 text-purple-800', // Hoàn trả
+                                                'failed' => 'bg-red-100 text-red-800',       // Giao thất bại
+                                                default => 'bg-gray-100 text-gray-600'
+                                            };
+                                        @endphp
+
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $shipClass }}">
+                                            {{ $shipmentLabels[$order->shipment->status] ?? ucfirst($order->shipment->status) }}
                                         </span>
                                     @else
                                         -
@@ -170,6 +242,7 @@
             </div>
         </div>
 
+        {{-- PHÂN TRANG --}}
         <div class="mt-6">
             {{ $orders->withQueryString()->links() }}
         </div>
@@ -178,17 +251,31 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('orderIndexPage', (init) => ({
+                // 1. Gán giá trị lọc ban đầu
                 search: init.search,
                 statusFilter: init.statusFilter,
                 dateFrom: init.dateFrom,
+                sortFilter: init.sortFilter,
 
+                // 2. Hàm xử lý gửi yêu cầu lọc về Server
                 applyFilters() {
                     let params = new URLSearchParams(window.location.search);
 
                     if (this.search) params.set('q', this.search); else params.delete('q');
                     if (this.statusFilter) params.set('status', this.statusFilter); else params.delete('status');
                     if (this.dateFrom) params.set('date_from', this.dateFrom); else params.delete('date_from');
+                    if (this.sortFilter) {
+                        let lastUnderscore = this.sortFilter.lastIndexOf('_');
+                        let sort = this.sortFilter.substring(0, lastUnderscore);
+                        let direction = this.sortFilter.substring(lastUnderscore + 1);
+                        params.set('sort', sort);
+                        params.set('direction', direction);
+                    } else {
+                        params.delete('sort');
+                        params.delete('direction');
+                    }
 
+                    // Reset về trang 1 khi thực hiện lọc mới
                     params.delete('page');
                     window.location.search = params.toString();
                 }

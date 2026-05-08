@@ -8,31 +8,31 @@
 @endsection
 
 @section('content')
+    @php
+        $orderStatusLabels = [
+            'pending'    => 'Chờ xử lý',
+            'paid'       => 'Đã thanh toán',
+            'processing' => 'Đang chuẩn bị hàng',
+            'shipped'    => 'Đang giao hàng',
+            'completed'  => 'Hoàn thành',
+            'cancelled'  => 'Đã hủy',
+            'refunded'   => 'Đã hoàn tiền'
+        ];
+
+        $paymentStatusLabels = [
+            'pending'  => 'Chờ thanh toán',
+            'paid'     => 'Đã thanh toán',
+            'failed'   => 'Thất bại',
+            'refunded' => 'Đã hoàn tiền'
+        ];
+    @endphp
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-
-            {{-- Thông báo Flash --}}
-            @if(session('success'))
-                <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-green-700">{{ session('success') }}</p>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {{-- CỘT TRÁI: DANH SÁCH SẢN PHẨM & QUẢN LÝ VẬN CHUYỂN --}}
                 <div class="lg:col-span-2 space-y-6">
-                    {{-- 1. Danh sách sản phẩm (Items) --}}
+                    {{-- 1. Danh sách sản phẩm --}}
                     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
                         <div
                             class="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
@@ -95,7 +95,7 @@
                         </div>
                     </div>
 
-                    {{-- 2. Quản lý Vận chuyển (Module H - Shipments) --}}
+                    {{-- 2. Quản lý Vận chuyển --}}
                     <div class="bg-white shadow sm:rounded-lg overflow-hidden border border-blue-100">
                         <div class="px-4 py-4 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
                             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +140,9 @@
                                             <select name="status"
                                                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                                                 @foreach(['pending' => 'Chờ lấy hàng', 'picked_up' => 'Đã lấy hàng', 'in_transit' => 'Đang giao', 'delivered' => 'Đã giao', 'returned' => 'Hoàn trả', 'failed' => 'Giao thất bại'] as $key => $label)
-                                                    <option value="{{ $key }}" {{ $order->shipment->status == $key ? 'selected' : '' }}>{{ $label }} ({{ $key }})</option>
+                                                    <option value="{{ $key }}" {{ ($order->shipment?->status == $key) ? 'selected' : '' }}>
+                                                        {{ $label }} ({{ $key }})
+                                                    </option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -153,7 +155,7 @@
                                     </div>
                                 </form>
 
-                                {{-- Shipment Timestamps --}}
+                                {{-- Lịch sử vận chuyển --}}
                                 @if($order->shipment->shipped_at || $order->shipment->delivered_at)
                                     <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 flex gap-4">
                                         @if($order->shipment->shipped_at)
@@ -201,7 +203,7 @@
 
                 {{-- CỘT PHẢI: TRẠNG THÁI & THANH TOÁN --}}
                 <div class="lg:col-span-1 space-y-6">
-                    {{-- 3. Trạng thái Đơn hàng (Module F) --}}
+                    {{-- 3. Trạng thái Đơn hàng --}}
                     <div
                         class="bg-white shadow sm:rounded-lg p-6 border-t-4 {{ $order->status === 'completed' ? 'border-green-500' : ($order->status === 'cancelled' ? 'border-red-500' : 'border-indigo-500') }}">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Trạng thái Đơn hàng</h3>
@@ -212,12 +214,13 @@
                                 <select name="status"
                                     class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                     @foreach($statuses as $st)
-                                        <option value="{{ $st }}" {{ $order->status == $st ? 'selected' : '' }}>{{ ucfirst($st) }}
+                                        <option value="{{ $st }}" {{ $order->status == $st ? 'selected' : '' }}>
+                                            {{ $orderStatusLabels[$st] ?? ucfirst($st) }}
                                         </option>
                                     @endforeach
                                 </select>
                                 <p class="mt-2 text-xs text-gray-500">
-                                    * Lưu ý: Chuyển sang "Completed" có thể sẽ tự động đánh dấu đã thanh toán và giao hàng
+                                    * Lưu ý: Chuyển sang "Hoàn thành" có thể sẽ tự động đánh dấu đã thanh toán và giao hàng
                                     thành công.
                                 </p>
                             </div>
@@ -239,7 +242,7 @@
                         </div>
                     </div>
 
-                    {{-- 4. Quản lý Thanh toán (Module G - Payment) --}}
+                    {{-- 4. Quản lý Thanh toán --}}
                     @if($order->payment)
                         <div
                             class="bg-white shadow sm:rounded-lg p-6 border-l-4 {{ $order->payment->status == 'paid' ? 'border-green-500' : ($order->payment->status == 'failed' ? 'border-red-500' : 'border-yellow-500') }}">
@@ -257,13 +260,12 @@
                                         class="uppercase text-gray-900">{{ $order->payment->method }}</strong></p>
                                 <div class="mt-2 flex items-center">
                                     <span class="text-sm text-gray-600 mr-2">Trạng thái:</span>
-                                    <span
-                                        class="px-2 py-1 rounded text-xs font-bold {{ $order->payment->status == 'paid' ? 'bg-green-100 text-green-800' : ($order->payment->status == 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
-                                        {{ ucfirst($order->payment->status) }}
+                                    <span class="px-2 py-1 rounded text-xs font-bold {{ $order->payment->status == 'paid' ? 'bg-green-100 text-green-800' : ($order->payment->status == 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                        {{ $paymentStatusLabels[$order->payment->status] ?? $order->payment->status }}
                                     </span>
                                 </div>
                                 @if($order->payment->paid_at)
-                                    <p class="text-xs text-gray-500 mt-1">Đã trả:
+                                    <p class="text-sm text-gray-600 mr-2">Đã trả:
                                         {{ $order->payment->paid_at->format('d/m/Y H:i') }}</p>
                                 @endif
                             </div>

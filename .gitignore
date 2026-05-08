@@ -23,3 +23,5 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 gemini_cli.py
+ecommerce.sql
+*.sql

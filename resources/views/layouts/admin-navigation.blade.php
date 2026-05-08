@@ -20,6 +20,11 @@
     @php
         $menu = [
             [
+                'name' => 'Đơn hàng',
+                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M14 8H8"></path><path d="M16 12H8"></path><path d="M13 16H8"></path></svg>',
+                'route' => 'admin.orders.index'
+            ],
+            [
                 'name' => 'Dashboard',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>',
                 'route' => 'admin.dashboard'
@@ -49,11 +54,7 @@
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>',
                 'route' => 'admin.carts.index'
             ],
-            [
-                'name' => 'Đơn hàng',
-                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M14 8H8"></path><path d="M16 12H8"></path><path d="M13 16H8"></path></svg>',
-                'route' => 'admin.orders.index'
-            ],
+
             [
                 'name' => 'Mã giảm giá',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 1 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M9 9h.01"></path><path d="m15 9-6 6"></path><path d="M15 15h.01"></path></svg>',
@@ -85,10 +86,10 @@
     <nav class="flex-1 overflow-y-auto mt-4 px-2 space-y-1">
         @foreach ($menu as $item)
             <a href="{{ route($item['route']) }}" data-turbo="false" class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md
-                                                    {{ request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*')
+                                                        {{ request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*')
             ? 'bg-indigo-50 text-indigo-700'
             : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}
-                                                    transition-colors duration-150"
+                                                        transition-colors duration-150"
                 :class="expanded ? '' : 'justify-center'" :title="expanded ? '' : '{{ $item['name'] }}'">
 
                 <div class="flex-shrink-0">{!! $item['icon'] !!}</div>

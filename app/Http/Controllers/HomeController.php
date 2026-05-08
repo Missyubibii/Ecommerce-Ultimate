@@ -16,12 +16,14 @@ class HomeController extends Controller
 
         $mainBanners = $allBanners->where('position', 'main_slider')->values();
         if ($mainBanners->isEmpty()) {
-            $mainBanners = collect([(object)[
-                'id' => 1,
-                'title' => 'Chào mừng đến với Ultimate Store',
-                'image_url' => 'https://placehold.co/1200x450/2563eb/ffffff?text=Ultimate+Store',
-                'url' => '#'
-            ]]);
+            $mainBanners = collect([
+                (object) [
+                    'id' => 1,
+                    'title' => 'Chào mừng đến với Ultimate Store',
+                    'image_url' => 'https://placehold.co/1200x450/2563eb/ffffff?text=Ultimate+Store',
+                    'url' => '#'
+                ]
+            ]);
         }
 
         $ads = $allBanners->where('position', '!=', 'main_slider')

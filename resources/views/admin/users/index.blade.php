@@ -126,23 +126,36 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    @foreach($user->roles as $role)
+                                    {{-- @foreach($user->roles as $role)
                                         <span
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
                                             {{ $role->name }}
                                         </span>
+                                    @endforeach --}}
+                                    @foreach ($user->roles as $role)
+                                        @if ($role->name === 'admin')
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+                                                Quản trị viên
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                                                Thành viên
+                                            </span>
+                                        @endif
                                     @endforeach
                                 </td>
                                 <td class="px-4 py-3">
                                     @if($user->status === 'active')
                                         <span
-                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Đang hoạt động</span>
                                     @elseif($user->status === 'banned')
                                         <span
-                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Banned</span>
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Đã bị cấm</span>
                                     @else
                                         <span
-                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Không hoạt động</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">

@@ -4,9 +4,11 @@
 @section('header', 'Danh sách sản phẩm')
 
 @php
+    //price_asc, price_desc, created_at_desc, quantity_asc
     $initialData = [
         'search' => request('q', ''),
         'categoryFilter' => request('category_id', ''),
+        'sortFilter' => request('sort') ? request('sort') . '_' . request('direction', 'desc') : '',
         'statusFilter' => request('status', ''),
         'allProductIds' => $allProductIds,
     ];
@@ -62,6 +64,17 @@
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                <div class="min-w-[150px]">
+                    <select x-model="sortFilter" @change="applyFilters()"
+                        class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">-- Sắp xếp --</option>
+                        <option value="price_asc">Giá: Thấp đến Cao</option>
+                        <option value="price_desc">Giá: Cao đến Thấp</option>
+                        <option value="created_at_desc">Mới nhập (Mặc định)</option>
+                        <option value="quantity_asc">Tồn kho: Ít nhất</option>
                     </select>
                 </div>
 
@@ -129,25 +142,35 @@
                                         </div>
                                         <div>
                                             <div class="font-medium text-gray-900 group-hover:text-indigo-600">
-                                                {{ $product->name }}</div>
+                                                {{ $product->name }}
+                                            </div>
                                             <div class="text-xs text-gray-500">{{ $product->sku }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">{{ $product->category?->name ?? '—' }}</td>
                                 <td class="px-4 py-3 text-right font-bold text-gray-800">
-                                    {{ number_format($product->price, 0, ',', '.') }} đ</td>
+                                    {{ number_format($product->price, 0, ',', '.') }} đ
+                                </td>
                                 <td class="px-4 py-3 text-center">
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $product->quantity <= $product->min_stock ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' }}">
                                         {{ $product->quantity }}
                                     </span>
                                 </td>
+
                                 <td class="px-4 py-3">
-                                    <span
+                                    {{-- <span
                                         class="px-2 py-1 text-xs font-semibold rounded-full {{ $product->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
                                         {{ ucfirst($product->status) }}
-                                    </span>
+                                    </span> --}}
+                                    @if($product->status === 'active')
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Đang
+                                            hoạt động</span>
+                                    @else
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Ngừng
+                                            bán</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-right space-x-2">
                                     <a href="{{ route('admin.products.show', $product) }}"
@@ -174,6 +197,7 @@
                 search: initialData.search,
                 categoryFilter: initialData.categoryFilter,
                 statusFilter: initialData.statusFilter,
+                sortFilter: initialData.sortFilter,
                 allProductIds: initialData.allProductIds,
                 selectedProducts: [],
                 selectAll: false,
@@ -183,6 +207,17 @@
                     if (this.search) params.set('q', this.search); else params.delete('q');
                     if (this.categoryFilter) params.set('category_id', this.categoryFilter); else params.delete('category_id');
                     if (this.statusFilter) params.set('status', this.statusFilter); else params.delete('status');
+                    if (this.sortFilter) {
+                        let lastUnderscore = this.sortFilter.lastIndexOf('_');
+                        let sort = this.sortFilter.substring(0, lastUnderscore);
+                        let direction = this.sortFilter.substring(lastUnderscore + 1);
+
+                        params.set('sort', sort);
+                        params.set('direction', direction);
+                    } else {
+                        params.delete('sort');
+                        params.delete('direction');
+                    }
                     params.delete('page');
                     window.location.search = params.toString();
                 },

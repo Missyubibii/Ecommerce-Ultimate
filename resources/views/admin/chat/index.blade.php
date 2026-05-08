@@ -43,7 +43,7 @@
                                             <i data-lucide="user" class="w-4 h-4"></i>
                                         </div>
                                         <div class="ml-3">
-                                            <div class="text-sm font-medium text-gray-900 italic text-gray-600">Khách vãng lai</div>
+                                            <div class="text-sm font-medium text-gray-900 italic">Khách chưa đăng nhập</div>
                                             <div class="text-xs text-gray-500">Token: {{ substr($session->session_token, 0, 8) }}...
                                             </div>
                                         </div>

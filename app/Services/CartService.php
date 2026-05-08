@@ -15,13 +15,14 @@ class CartService
     // =========================================================================
 
     /**
-     * Lấy giỏ hàng của User hoặc Guest
+     * 1. Lấy thông tin giỏ hàng hiện tại (Dành cho cả thành viên và khách)
      */
     public function getCart($userId = null, $sessionId = null)
     {
-        // 1. Chỉ cần with('product') vì cột 'image' nằm ngay trong bảng products
+        // Khởi tạo truy vấn lấy sản phẩm kèm theo (Eager Loading)
         $query = CartItem::with(['product']);
 
+        // Phân loại: Ưu tiên lấy theo User ID, nếu không có thì lấy theo Session ID (Khách)
         if ($userId) {
             $query->where('user_id', $userId);
         } else {
@@ -31,61 +32,62 @@ class CartService
         $items = $query->get();
         $subtotal = 0;
 
+        // Duyệt qua từng sản phẩm để xử lý logic hình ảnh, trạng thái kho và tính tiền
         $items->each(function ($item) use (&$subtotal) {
             $product = $item->product;
 
+            // --- Xử lý logic hiển thị hình ảnh sản phẩm ---
             $img = $product->image;
-            $finalImageUrl = 'https://placehold.co/100?text=No+Image'; // Mặc định
+            $finalImageUrl = 'https://placehold.co/100?text=No+Image'; // Ảnh mặc định nếu trống
 
             if (!empty($img)) {
                 if (filter_var($img, FILTER_VALIDATE_URL)) {
-                    // 1. Nếu là link online (http...)
+                    // Trường hợp 1: Link ảnh từ web bên ngoài (URL trực tiếp)
                     $finalImageUrl = $img;
                 } elseif (file_exists(public_path($img))) {
-                    // 2. Nếu file nằm trực tiếp trong folder public/ (VD: public/images/...)
+                    // Trường hợp 2: File ảnh nằm trong thư mục public gốc
                     $finalImageUrl = asset($img);
                 } else {
-                    // 3. Nếu không tìm thấy ở public, thử tìm trong storage (VD: public/storage/images/...)
-                    // Code này tự động thêm 'storage/' nếu đường dẫn trong DB chưa có
+                    // Trường hợp 3: Thử tìm trong thư mục storage/app/public
                     $pathWithStorage = str_starts_with($img, 'storage/') ? $img : 'storage/' . $img;
                     $finalImageUrl = asset($pathWithStorage);
                 }
             }
             $item->product->image = $finalImageUrl;
 
-            // Mặc định là OK
+            // --- Kiểm tra tính hợp lệ của sản phẩm trong giỏ ---
             $item->is_available = true;
             $item->message = '';
 
-            // Check 1: Sản phẩm không tồn tại
+            // Kiểm tra 1: Sản phẩm đã bị xóa khỏi hệ thống
             if (!$product) {
                 $item->is_available = false;
                 $item->message = 'Sản phẩm không tồn tại';
-                return; // Dừng check, không tính tiền
+                return;
             }
 
-            // Check 2: Trạng thái (Dựa trên status='active' và is_active=1)
+            // Kiểm tra 2: Sản phẩm đã ngừng kinh doanh (Status inactive)
             if ($product->status !== 'active' || $product->is_active != 1) {
                 $item->is_available = false;
                 $item->message = 'Ngừng kinh doanh';
             }
 
-            // Check 3: Hết hàng (quantity = 0)
+            // Kiểm tra 3: Sản phẩm trong kho đã hết hàng (Số lượng = 0)
             elseif ($product->quantity <= 0) {
                 $item->is_available = false;
                 $item->message = 'Đã hết hàng';
             }
 
-            // Check 4: Mua quá số lượng kho
+            // Kiểm tra 4: Số lượng khách mua vượt quá số lượng còn lại trong kho
             elseif ($item->quantity > $product->quantity) {
                 $item->is_available = false;
                 $item->message = "Kho chỉ còn {$product->quantity} chiếc.";
             }
 
-            // Tính tiền
+            // --- Tính toán tổng tiền của từng dòng sản phẩm ---
             $item->total = ($product->price ?? 0) * $item->quantity;
 
-            // Chỉ cộng tổng tiền nếu sản phẩm HỢP LỆ (is_available = true)
+            // Chỉ cộng vào tổng đơn hàng nếu sản phẩm đó còn hàng và đang bán (is_available = true)
             if ($item->is_available) {
                 $subtotal += $item->total;
             }
@@ -93,24 +95,24 @@ class CartService
 
         return [
             'items' => $items,
-            // Đếm tổng số lượng (bao gồm cả hàng lỗi để khách thấy mà xóa)
-            'count' => $items->sum('quantity'),
-            'subtotal' => $subtotal
+            'count' => $items->sum('quantity'), // Tổng số lượng món hàng trong giỏ
+            'subtotal' => $subtotal             // Tổng số tiền tạm tính
         ];
     }
 
     /**
-     * Thêm sản phẩm vào giỏ
+     * 2. Thêm một sản phẩm mới vào giỏ hàng
      */
     public function addToCart($userId, $sessionId, $productId, $quantity = 1)
     {
         $product = Product::findOrFail($productId);
 
+        // Kiểm tra kho trước khi cho phép thêm vào giỏ
         if ($product->quantity < $quantity) {
             throw new \Exception("Sản phẩm chỉ còn {$product->quantity} hàng trong kho.");
         }
 
-        // Tìm item đã tồn tại chưa
+        // Kiểm tra xem sản phẩm này đã có trong giỏ chưa
         $query = CartItem::where('product_id', $productId);
         if ($userId) {
             $query->where('user_id', $userId);
@@ -121,46 +123,49 @@ class CartService
         $cartItem = $query->first();
 
         if ($cartItem) {
+            // Nếu đã có: Chỉ cập nhật thêm số lượng
             $cartItem->quantity += $quantity;
             $cartItem->save();
         } else {
-            // Create new
+            // Nếu chưa có: Tạo bản ghi mới trong giỏ hàng
             CartItem::create([
                 'user_id' => $userId,
-                'session_id' => $userId ? null : $sessionId, // Nếu là user thì không cần lưu session_id rác
+                'session_id' => $userId ? null : $sessionId,
                 'product_id' => $productId,
                 'quantity' => $quantity
             ]);
         }
 
+        // Trả về dữ liệu giỏ hàng mới nhất để cập nhật UI
         return $this->getCart($userId, $sessionId);
     }
 
     /**
-     * Cập nhật số lượng
+     * 3. Thay đổi số lượng của một sản phẩm trong giỏ
      */
     public function updateQty($itemId, $quantity)
     {
         $item = CartItem::findOrFail($itemId);
 
         if ($quantity <= 0) {
+            // Nếu số lượng về 0 hoặc nhỏ hơn: Xóa sản phẩm khỏi giỏ
             $item->delete();
         } else {
-            // Check stock
+            // Kiểm tra kho: Đảm bảo số lượng yêu cầu không vượt quá số lượng thực tế
             if ($item->product->quantity < $quantity) {
                 throw new \Exception("Kho không đủ hàng.");
             }
             $item->quantity = $quantity;
             $item->save();
         }
-        // Trả về cart mới nhất để update UI
+
         $userId = Auth::id();
         $sessionId = Session::getId();
         return $this->getCart($userId, $sessionId);
     }
 
     /**
-     * Xóa 1 item
+     * 4. Xóa hoàn toàn một dòng sản phẩm khỏi giỏ hàng
      */
     public function removeItem($itemId)
     {
@@ -172,74 +177,69 @@ class CartService
     }
 
     /**
-     * Merge giỏ hàng từ Session sang User khi Login
+     * 5. Hợp nhất giỏ hàng (Chuyển sản phẩm từ khách vãng lai sang User sau khi đăng nhập)
      */
     public function mergeCart($sessionId, $userId)
     {
-        // 1. Lấy giỏ hàng Guest
+        // Lấy tất cả sản phẩm đang lưu theo Session ID của khách
         $guestItems = CartItem::where('session_id', $sessionId)->whereNull('user_id')->get();
 
         foreach ($guestItems as $guestItem) {
-            // 2. Kiểm tra xem User đã có sản phẩm này trong giỏ chưa
+            // Kiểm tra xem User đã có sản phẩm này trong giỏ của họ chưa
             $userItem = CartItem::where('user_id', $userId)
                 ->where('product_id', $guestItem->product_id)
                 ->first();
 
             if ($userItem) {
-                // Cộng dồn số lượng
+                // Nếu đã có: Cộng dồn số lượng từ giỏ khách vào giỏ User và xóa bản ghi khách
                 $userItem->quantity += $guestItem->quantity;
                 $userItem->save();
-                // Xóa item guest cũ
                 $guestItem->delete();
             } else {
-                // Chuyển quyền sở hữu từ session sang user
+                // Nếu chưa có: Chuyển quyền sở hữu trực tiếp (Cập nhật user_id và xóa session_id)
                 $guestItem->user_id = $userId;
-                $guestItem->session_id = null; // Clear session id để sạch data
+                $guestItem->session_id = null;
                 $guestItem->save();
             }
         }
     }
 
+    /**
+     * 6. Lấy tổng tiền giỏ hàng theo định danh (Dùng cho Checkout/Order)
+     */
     public function getCartTotals($identifier): float
     {
-        // Luôn join với bảng products để lấy giá mới nhất
-        // Tránh trường hợp sản phẩm đã đổi giá nhưng trong giỏ vẫn lưu giá cũ
+        // Join với bảng products để đảm bảo lấy giá bán mới nhất tại thời điểm thanh toán
         return CartItem::where($identifier)
             ->join('products', 'cart_items.product_id', '=', 'products.id')
             ->sum(DB::raw('cart_items.quantity * products.price'));
     }
 
     // =========================================================================
-    // SECTION 2: ADMIN METHODS
+    // SECTION 2: ADMIN METHODS (Dành cho trang quản trị)
     // =========================================================================
 
     /**
-     * Lấy danh sách các giỏ hàng đang active để hiển thị Admin Table
-     * Logic: Group by SessionID hoặc UserID để đếm tổng quát
+     * 7. [Admin] Lấy danh sách tổng hợp các giỏ hàng đang hoạt động trên hệ thống
      */
     public function getAdminCartsListing($perPage = 10)
     {
-        // Sử dụng Eloquent để group và select raw
-        // Lưu ý: Cần config database 'strict' => false trong config/database.php nếu MySQL báo lỗi Group By,
-        // hoặc liệt kê đầy đủ các cột trong Group By.
-        // Ở đây ta select các cột định danh để hiển thị.
-
         return CartItem::query()
             ->select(
                 'session_id',
                 'user_id',
-                DB::raw('COUNT(id) as total_unique_items'), // Số loại sản phẩm
-                DB::raw('SUM(quantity) as total_quantity'), // Tổng số lượng
-                DB::raw('MAX(updated_at) as last_active')   // Thời gian cập nhật cuối
+                DB::raw('COUNT(id) as total_unique_items'), // Đếm số loại sản phẩm (SKU)
+                DB::raw('SUM(quantity) as total_quantity'), // Tổng số lượng sản phẩm
+                DB::raw('MAX(updated_at) as last_active')   // Thời điểm cuối cùng giỏ hàng được cập nhật
             )
-            ->with('user') // Eager load user để hiển thị tên
+            ->with('user') // Lấy tên người dùng nếu có
             ->groupBy('session_id', 'user_id')
             ->orderByDesc('last_active')
             ->paginate($perPage);
     }
 
     /**
-     * Lấy chi tiết một giỏ hàng cụ thể cho Admin xem
+     * 8. [Admin] Xem chi tiết các sản phẩm bên trong một giỏ hàng cụ thể
      */
     public function getAdminCartDetails($userId, $sessionId)
     {
@@ -250,16 +250,15 @@ class CartService
         } elseif ($sessionId) {
             $query->where('session_id', $sessionId)->whereNull('user_id');
         } else {
-            // Trường hợp không có param nào, trả về collection rỗng
             return collect([]);
         }
 
         $items = $query->get();
 
-        // Map thêm thuộc tính 'total' để Controller dùng $items->sum('total')
+        // Chuẩn bị dữ liệu hiển thị giá và tổng tiền tại thời điểm Admin đang xem
         $items->transform(function ($item) {
             $price = $item->product->price ?? 0;
-            $item->price = $price; // Gán giá tại thời điểm xem
+            $item->price = $price;
             $item->total = $price * $item->quantity;
             return $item;
         });
@@ -268,7 +267,7 @@ class CartService
     }
 
     /**
-     * Admin xóa giỏ hàng (Clear cart)
+     * 9. [Admin] Xóa bỏ toàn bộ giỏ hàng của một người dùng hoặc một phiên làm việc
      */
     public function clearCartByAdmin($userId, $sessionId)
     {
@@ -277,7 +276,7 @@ class CartService
         if ($userId) {
             $query->where('user_id', $userId);
         } elseif ($sessionId) {
-            $query->where('session_id', $sessionId); // Admin clear có thể xóa thẳng tay session
+            $query->where('session_id', $sessionId);
         } else {
             return false;
         }

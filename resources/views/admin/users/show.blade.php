@@ -38,9 +38,9 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Trạng thái</label>
                         <select name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="active" {{ $user->status == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ $user->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="banned" {{ $user->status == 'banned' ? 'selected' : '' }}>Banned</option>
+                            <option value="active" {{ $user->status == 'active' ? 'selected' : '' }}>Đang hoạt động</option>
+                            <option value="inactive" {{ $user->status == 'inactive' ? 'selected' : '' }}>Vô hiệu hóa</option>
+                            <option value="banned" {{ $user->status == 'banned' ? 'selected' : '' }}>Cấm tài khoản</option>
                         </select>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
                                 <p class="mt-1 text-sm text-gray-500">{{ $addr->address_line1 }}, {{ $addr->city }}, {{ $addr->state }}</p>
                             </div>
                             @if($addr->is_default)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Default</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Mặc định</span>
                             @endif
                         </div>
                     </li>
@@ -107,9 +107,19 @@
             <h2 class="mt-4 text-xl font-bold text-gray-900">{{ $user->name }}</h2>
             <p class="text-gray-500">{{ $user->email }}</p>
             <div class="mt-4">
-                <span class="px-3 py-1 rounded-full text-sm font-semibold {{ $user->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                    {{ ucfirst($user->status) }}
-                </span>
+                @foreach ($user->roles as $role)
+                    @if ($role->name === 'admin')
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+                            Quản trị viên
+                        </span>
+                    @else
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                            Thành viên
+                        </span>
+                    @endif
+                @endforeach
             </div>
         </div>
 

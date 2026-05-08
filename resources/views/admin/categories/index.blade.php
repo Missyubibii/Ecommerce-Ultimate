@@ -147,7 +147,8 @@
                                                                         class="text-sm font-medium text-gray-700">{{ $child->name }}</span>
                                                                 </td>
                                                                 <td class="px-6 py-3 text-gray-500 font-mono text-xs w-1/3">
-                                                                    {{ $child->slug }}</td>
+                                                                    {{ $child->slug }}
+                                                                </td>
                                                                 <td class="px-6 py-3 text-center text-sm text-gray-500">
                                                                     {{ $child->products_count ?? 0 }}
                                                                 </td>
@@ -178,7 +179,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-center bg-white group-hover:bg-transparent">
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                        {{ $root->products_count ?? 0 }} SP
+                                        {{-- Tính tổng: SP của cha + Tổng SP của tất cả các con --}}
+                                        {{ ($root->products_count ?? 0) + $root->children->sum('products_count') }} SP
                                     </span>
                                 </td>
                                 <td

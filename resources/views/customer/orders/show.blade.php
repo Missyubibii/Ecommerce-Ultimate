@@ -66,8 +66,13 @@
                             @foreach($order->items as $item)
                                 <div class="p-4 flex gap-4">
                                     <div class="w-20 h-20 border rounded bg-gray-100 flex-shrink-0 overflow-hidden">
-                                        <img src="{{ !empty($item->product_snapshot['image']) ? asset('storage/' . $item->product_snapshot['image']) : 'https://placehold.co/100' }}"
-                                            class="w-full h-full object-cover">
+                                        <img src="{{
+                                                ($item->product && $item->product->image)
+                                                    ? (Str::startsWith($item->product->image, 'http')
+                                                        ? $item->product->image
+                                                        : asset('storage/' . $item->product->image))
+                                                    : 'https://placehold.co/100x100?text=No+Image'
+                                            }}" alt="{{ $item->product_name }}" class="w-16 h-16 rounded-lg object-cover border">
                                     </div>
                                     <div class="flex-1">
                                         <h4 class="font-bold text-gray-800">{{ $item->product_name }}</h4>

@@ -82,26 +82,30 @@
                         @endif
                     @endauth
 
-                    {{-- Form nhập địa chỉ mới (Có Pre-fill từ $prefill) --}}
+                    {{-- Form nhập địa chỉ (Có Pre-fill từ $prefill) --}}
                     <div x-show="addressOption === 'new'" class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Họ tên người nhận *</x-input-label>
                             {{-- Pre-fill tên --}}
-                            <x-text-input name="new_address[full_name]" class="w-full mt-1" value="{{ old('new_address.full_name', $prefill['name']) }}" required />
+                            {{-- SỬA: Dùng x-bind:required thay vì :required --}}
+                            <x-text-input name="new_address[full_name]" class="w-full mt-1" value="{{ old('new_address.full_name', $prefill['name']) }}" x-bind:required="addressOption === 'new'" />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Số điện thoại *</x-input-label>
                             {{-- Pre-fill SĐT --}}
-                            <x-text-input name="new_address[phone]" class="w-full mt-1" value="{{ old('new_address.phone', $prefill['phone']) }}" required />
+                            {{-- SỬA: Dùng x-bind:required thay vì :required --}}
+                            <x-text-input name="new_address[phone]" class="w-full mt-1" value="{{ old('new_address.phone', $prefill['phone']) }}" x-bind:required="addressOption === 'new'" />
                         </div>
                         <div class="col-span-2">
                             <x-input-label>Địa chỉ (Số nhà, tên đường) *</x-input-label>
                             {{-- Pre-fill Địa chỉ --}}
-                            <x-text-input name="new_address[address_line1]" class="w-full mt-1" value="{{ old('new_address.address_line1', $prefill['address']) }}" placeholder="Ví dụ: 123 Nguyễn Trãi" required />
+                            {{-- SỬA: Dùng x-bind:required thay vì :required --}}
+                            <x-text-input name="new_address[address_line1]" class="w-full mt-1" value="{{ old('new_address.address_line1', $prefill['address']) }}" placeholder="Ví dụ: 123 Nguyễn Trãi" x-bind:required="addressOption === 'new'" />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Tỉnh / Thành phố *</x-input-label>
-                            <x-text-input name="new_address[city]" class="w-full mt-1" required />
+                            {{-- SỬA: Dùng x-bind:required thay vì :required --}}
+                            <x-text-input name="new_address[city]" class="w-full mt-1" x-bind:required="addressOption === 'new'" />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <x-input-label>Quận / Huyện</x-input-label>
@@ -110,7 +114,7 @@
                     </div>
                 </div>
 
-                {{-- Phần Thanh toán giữ nguyên --}}
+                {{-- Phần Thanh toán--}}
                 <div class="bg-white p-6 shadow rounded-lg">
                     <h2 class="text-lg font-bold mb-4 flex items-center">
                         <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-2">2</span>
@@ -149,7 +153,6 @@
                             <div class="py-3 flex justify-between text-sm">
                                 <div class="flex gap-3">
                                     <div class="relative">
-                                        {{-- FIX LỖI ẢNH: Sử dụng $item->product->image thay vì image_url --}}
                                         <img src="{{ $item->product->image }}" class="w-10 h-10 rounded object-cover border">
                                         <span class="absolute -top-1 -right-1 bg-gray-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full">{{ $item->quantity }}</span>
                                     </div>

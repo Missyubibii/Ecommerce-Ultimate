@@ -15,9 +15,9 @@ API_KEYS = [k.strip() for k in API_KEYS_STR.split(',') if k.strip()]
 current_key_index = 0
 
 # --- CẤU HÌNH MODEL ---
-MODEL_NAME = "gemini-flash-latest" 
+MODEL_NAME = "gemini-flash-latest"
 GENERATION_CONFIG = {
-    "temperature": 0.3, 
+    "temperature": 0.3,
     "top_p": 0.95,
     "top_k": 40,
     "max_output_tokens": 8192,
@@ -26,7 +26,7 @@ GENERATION_CONFIG = {
 
 # --- SYSTEM PROMPT CHUYÊN NGHIỆP ---
 SYSTEM_PROMPT_TEMPLATE = """
-Bạn là "Ultimate Assistant" - Chuyên viên tư vấn, Chăm sóc khách hàng cấp cao của hệ thống Laravel E-Commerce Ultimate.
+Bạn là "Ultimate Assistant" - Chuyên viên tư vấn, Chăm sóc khách hàng cấp cao của hệ thống TMĐT.
 Bạn chuyên về các thiết bị công nghệ (Điện thoại, Laptop, PC, Phụ kiện).
 
 DỮ LIỆU SẢN PHẨM HIỆN CÓ (CONTEXT):
@@ -37,6 +37,8 @@ LỊCH SỬ TRÒ CHUYỆN:
 
 NHIỆM VỤ CỦA BẠN:
 1.  **Tư vấn sản phẩm:**
+    - Dựa CHÍNH XÁC vào dữ liệu trong CONTEXT để trả lời.
+    - Nếu khách hàng yêu cầu so sánh (ví dụ: iPhone vs Samsung), hãy tìm các sản phẩm tương ứng trong CONTEXT và so sánh về: Giá, Cấu hình (trong phần specs), và Tình trạng hàng.
     - Cung cấp đầy đủ: Tên, Giá, Tồn kho.
     - So sánh các sản phẩm nếu khách phân vân (dựa trên thông số trong Context).
     - Nếu Tồn kho > 0: Mời gọi mua hàng (Call to Action).
@@ -51,15 +53,17 @@ NHIỆM VỤ CỦA BẠN:
 
 ĐỊNH DẠNG OUTPUT JSON (BẮT BUỘC):
 {
-    "text": "Câu trả lời của bạn với khách hàng (Dùng icon ✨, 📱, 🚀 cho sinh động)...",
-    "recommended_products": [ID_SP_1, ID_SP_2], // Chỉ điền ID nếu đang giới thiệu sản phẩm
-    
+    "text": "Câu trả lời của bạn (dùng markdown để trình bày bảng so sánh hoặc gạch đầu dòng cho đẹp)...",
+    "recommended_products": [ID_SP_1, ID_SP_2],
+    "order_status": "browsing"
+    Lưu ý: "recommended_products" là mảng chứa ID các sản phẩm khách đang nhắc đến hoặc so sánh.
+
     // Trạng thái đơn hàng
     "order_status": "browsing", // Các trạng thái: "browsing" (đang xem), "collecting_info" (đang lấy thông tin), "completed" (xong)
 
     // Chỉ điền dữ liệu này khi action = "add_to_cart"
     "cart_data": {
-        "product_id": 123,   // ID sản phẩm khách chốt (Lấy từ lịch sử chat hoặc context)
+        "product_id": 123,   // ID sản phẩm (Lấy từ lịch sử chat hoặc context)
         "quantity": 1,
         "customer_info": {
             "name": "Nguyễn Văn A",
@@ -90,7 +94,7 @@ def process_chat():
     try:
         data = request.json
         message = data.get('message', '')
-        history = data.get('history', []) 
+        history = data.get('history', [])
         products_context = data.get('products_context', [])
 
         # Chuyển đổi history thành dạng text để đưa vào Prompt (Giúp AI nhớ ngữ cảnh tốt hơn)
@@ -122,12 +126,12 @@ def process_chat():
 
                 chat = model.start_chat(history=gemini_history)
                 response = chat.send_message(message)
-                
+
                 return jsonify(json.loads(response.text))
 
             except exceptions.ResourceExhausted:
                 wait_time = 2 ** (attempt + 1)
-                print(f"⚠️ Lượt truy cập quá nhiều. Vui lòng đợi {wait_time} giây...")
+                print(f"Lượt truy cập quá nhiều. Vui lòng đợi {wait_time} giây...")
                 rotate_key()
                 time.sleep(wait_time)
                 attempt += 1
@@ -138,7 +142,7 @@ def process_chat():
                 time.sleep(1)
 
         return jsonify({
-            "text": "Hệ thống đang bận, vui lòng thử lại sau giây lát! 😓",
+            "text": "Hệ thống đang bận, vui lòng thử lại sau giây lát!",
             "recommended_products": [],
             "order_status": "browsing"
         })

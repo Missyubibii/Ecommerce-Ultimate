@@ -52,9 +52,9 @@
                         {{-- Badge Trạng thái nổi --}}
                         <div class="absolute top-4 left-4 flex flex-col gap-2">
                             @if($product->status === 'active')
-                                <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200 shadow-sm">Active</span>
+                                <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200 shadow-sm">Đang hoạt động</span>
                             @else
-                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full border border-gray-200 shadow-sm">Draft</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full border border-gray-200 shadow-sm">Ngừng bán</span>
                             @endif
 
                             @if($product->is_featured)

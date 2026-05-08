@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| 1. PUBLIC ROUTES (GUEST + USER) - MODULE L
+| 1. PUBLIC ROUTES (GUEST + USER) 
 |--------------------------------------------------------------------------
 */
 
@@ -59,7 +59,7 @@ Route::delete('/chat/history', [ChatController::class, 'clearHistory'])->name('c
 
 /*
 |--------------------------------------------------------------------------
-| 2. USER ROUTES (CUSTOMER DASHBOARD) - MODULE A
+| 2. USER ROUTES (CUSTOMER DASHBOARD) 
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -90,10 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 3. ADMIN ROUTES (BACKEND PANEL) - MODULE J
+| 3. ADMIN ROUTES (BACKEND PANEL) 
 |--------------------------------------------------------------------------
 */
-// Prefix URL là /admin, Name là admin., Middleware check role admin
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')

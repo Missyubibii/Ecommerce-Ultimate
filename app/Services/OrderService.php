@@ -28,8 +28,10 @@ class OrderService
      */
     public function placeOrder($user, array $payload): Order
     {
-        // 1. Lấy dữ liệu giỏ hàng
-        $cartData = $this->cartService->getCartTotals();
+        // 1. Lấy dữ liệu giỏ hàng + Thông tin khách hàng
+        $userId = $user ? $user->id : null;
+        $sessionId = session()->getId();
+        $cartData = $this->cartService->getCart($userId, $sessionId);
         $items = $cartData['items'];
 
         if ($items->isEmpty()) {
@@ -47,14 +49,16 @@ class OrderService
                 // Lock dòng product để tránh race condition
                 $product = Product::where('id', $cartItem->product_id)->lockForUpdate()->first();
 
-                if (!$product) throw new Exception("Sản phẩm ID {$cartItem->product_id} không tồn tại.");
-                if ($product->quantity < $cartItem->quantity) throw new Exception("Sản phẩm '{$product->name}' không đủ hàng.");
+                if (!$product)
+                    throw new Exception("Sản phẩm ID {$cartItem->product_id} không tồn tại.");
+                if ($product->quantity < $cartItem->quantity)
+                    throw new Exception("Sản phẩm '{$product->name}' không đủ hàng.");
 
                 $product->quantity -= $cartItem->quantity;
                 $product->save();
             }
 
-            // B. Tạo Order (Module F)
+            // B. Tạo Order
             $order = Order::create([
                 'order_number' => 'ORD-' . strtoupper(Str::random(10)),
                 'user_id' => $user ? $user->id : null,
@@ -101,7 +105,7 @@ class OrderService
                 'cost' => 0
             ]);
 
-            // F. Dọn dẹp giỏ hàng (Module D)
+            // F. Dọn dẹp giỏ hàng
             if ($user) {
                 CartItem::where('user_id', $user->id)->delete();
             } else {
@@ -118,7 +122,8 @@ class OrderService
     {
         if (isset($payload['address_id']) && $user) {
             $address = Address::where('user_id', $user->id)->where('id', $payload['address_id'])->first();
-            if (!$address) throw new Exception("Địa chỉ không hợp lệ.");
+            if (!$address)
+                throw new Exception("Địa chỉ không hợp lệ.");
             return $address->toArray();
         }
         if (isset($payload['new_address'])) {
@@ -130,7 +135,7 @@ class OrderService
     public function getAdminOrders(array $filters = [], $perPage = 15)
     {
         // Eager load cả payment và shipment để hiển thị danh sách admin
-        $query = Order::with(['user', 'payment', 'shipment'])->orderByDesc('created_at');
+        $query = Order::with(['user', 'payment', 'shipment']);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -143,6 +148,16 @@ class OrderService
         }
         if (!empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $sort = $filters['sort'] ?? 'created_at';
+        $direction = $filters['direction'] ?? 'desc';
+
+        // Chỉ cho phép sắp xếp theo các cột an toàn
+        if (in_array($sort, ['total_amount', 'created_at'])) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->latest();
         }
 
         return $query->paginate($perPage)->withQueryString();
@@ -174,15 +189,29 @@ class OrderService
 
     public function updatePaymentStatus($paymentId, $status)
     {
-        $payment = Payment::findOrFail($paymentId);
+        // 1. Nạp quan hệ đơn hàng 
+        $payment = Payment::with('order')->findOrFail($paymentId);
+
         $data = ['status' => $status];
-        if ($status == 'paid') $data['paid_at'] = now();
+        if ($status == 'paid') {
+            $data['paid_at'] = now();
+        }
 
         $payment->update($data);
 
-        // Sync ngược lại Order: Nếu đã thanh toán -> order processing
+        // 2. Kiểm tra sự tồn tại của đơn hàng trước khi xử lý logic đồng bộ
+        if (!$payment->order) {
+            return;
+        }
+
+        // Nếu thanh toán thành công (paid) và đơn hàng đang ở trạng thái 'pending' thì chuyển sang 'processing'
         if ($status == 'paid' && $payment->order->status == 'pending') {
             $payment->order->update(['status' => 'processing']);
+        }
+
+        // Nếu thanh toán bị 'refunded' (Hoàn tiền) thì chuyển đơn hàng sang 'cancelled' (Đã hủy)
+        if ($status == 'refunded') {
+            $payment->order->update(['status' => 'cancelled']);
         }
     }
 
@@ -194,8 +223,10 @@ class OrderService
             'tracking_number' => $tracking,
             'status' => $status
         ];
-        if ($status == 'in_transit') $data['shipped_at'] = now();
-        if ($status == 'delivered') $data['delivered_at'] = now();
+        if ($status == 'in_transit')
+            $data['shipped_at'] = now();
+        if ($status == 'delivered')
+            $data['delivered_at'] = now();
 
         $shipment->update($data);
 

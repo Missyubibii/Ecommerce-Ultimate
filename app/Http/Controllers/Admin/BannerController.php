@@ -9,24 +9,39 @@ use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
+    /**
+     * Hiển thị danh sách các banner.
+     */
     protected $bannerService;
 
+    /**
+     * Tạo một instance của BannerService.
+     */
     public function __construct(BannerService $bannerService)
     {
         $this->bannerService = $bannerService;
     }
 
+    /**
+     * Hiển thị danh sách các banner.
+     */
     public function index(Request $request)
     {
         $banners = $this->bannerService->getAll($request->all());
         return view('admin.banners.index', compact('banners'));
     }
 
+    /**
+     * Hiển thị form tạo banner.
+     */
     public function create()
     {
         return view('admin.banners.create');
     }
 
+    /**
+     * Lưu banner vào database.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -42,11 +57,17 @@ class BannerController extends Controller
         return redirect()->route('admin.banners.index')->with('success', 'Thêm banner thành công');
     }
 
+    /**
+     * Hiển thị form chỉnh sửa banner.
+     */
     public function edit(Banner $banner)
     {
         return view('admin.banners.edit', compact('banner'));
     }
 
+    /**
+     * Cập nhật banner trong database.
+     */
     public function update(Request $request, Banner $banner)
     {
         $request->validate([
@@ -62,6 +83,9 @@ class BannerController extends Controller
         return redirect()->route('admin.banners.index')->with('success', 'Cập nhật banner thành công');
     }
 
+    /**
+     * Xóa banner khỏi database.
+     */
     public function destroy(Banner $banner)
     {
         $this->bannerService->delete($banner);

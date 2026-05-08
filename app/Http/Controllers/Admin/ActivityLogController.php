@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 
 class ActivityLogController extends Controller
 {
+    /**
+     * Hiển thị danh sách các hoạt động.
+     */
     protected $logService;
 
     public function __construct(ActivityLogService $logService)
@@ -15,8 +18,12 @@ class ActivityLogController extends Controller
         $this->logService = $logService;
     }
 
+    /**
+     * Hiển thị danh sách các hoạt động.
+     */
     public function index(Request $request)
     {
+        // Lấy các tham số lọc từ request
         $filters = $request->only(['causer_id', 'event', 'subject_type']);
         $activities = $this->logService->getLogs($filters);
 
