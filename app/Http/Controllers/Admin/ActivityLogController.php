@@ -24,7 +24,7 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         // Lấy các tham số lọc từ request
-        $filters = $request->only(['causer_id', 'event', 'subject_type']);
+        $filters = $request->only(['causer_id', 'event', 'subject_type', 'type']);
         $activities = $this->logService->getLogs($filters);
 
         return view('admin.activity_logs.index', [

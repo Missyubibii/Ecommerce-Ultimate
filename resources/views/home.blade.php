@@ -95,6 +95,9 @@
                 </div>
             </div>
 
+            {{-- PHẦN 1.5: BRAND SLIDER --}}
+            <x-brand-slider :brands="$featuredBrands" />
+
             {{-- PHẦN 2: DANH SÁCH SẢN PHẨM --}}
             <div class="container mx-auto px-4 space-y-12">
                 {{-- Loading Spinner --}}

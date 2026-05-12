@@ -95,17 +95,23 @@
         </div>
 
         {{-- Selected Actions --}}
-        <div x-show="selectedProducts.length > 0" x-transition
-            class="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center justify-between">
-            <div class="flex items-center"><span class="text-sm font-semibold text-indigo-800">Đã chọn <span
-                        x-text="selectedProducts.length"></span> sản phẩm</span></div>
+        <div x-show="selectedProducts.length > 0" x-transition x-cloak
+            class="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center justify-between shadow-sm">
+            <div class="flex items-center">
+                <span class="text-sm font-semibold text-indigo-800">
+                    Đã chọn <span x-text="selectedProducts.length" class="text-indigo-600 font-bold"></span> sản phẩm
+                </span>
+            </div>
             <div class="flex items-center space-x-2">
                 <button @click="bulkDelete()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm transition duration-300 flex items-center">
-                    Xóa đã chọn
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-4 rounded-lg text-sm transition duration-300 flex items-center gap-2 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Xóa các sản phẩm đã chọn
                 </button>
                 <button @click="selectedProducts = []; selectAll = false;"
-                    class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-1 px-3 rounded text-sm transition duration-300">Hủy</button>
+                    class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-4 rounded-lg text-sm transition duration-300">
+                    Hủy
+                </button>
             </div>
         </div>
 
@@ -223,8 +229,27 @@
                 },
                 toggleSelectAll() { this.selectedProducts = this.selectAll ? this.allProductIds : []; },
                 bulkDelete() {
-                    if (this.selectedProducts.length > 0 && confirm('Bạn có chắc muốn xóa các sản phẩm này?')) {
-                        alert('Chức năng xóa hàng loạt đang được phát triển.');
+                    if (this.selectedProducts.length > 0 && confirm('Bạn có chắc muốn xóa ' + this.selectedProducts.length + ' sản phẩm đã chọn?')) {
+                        fetch('{{ route("admin.products.bulkDelete") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ ids: this.selectedProducts })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            } else {
+                                alert(data.message || 'Có lỗi xảy ra.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Không thể kết nối tới máy chủ.');
+                        });
                     }
                 }
             }));

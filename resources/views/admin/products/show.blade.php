@@ -11,7 +11,10 @@
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">{{ $product->name }}</h1>
                 <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                    <span class="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono text-xs">{{ $product->sku }}</span>
+                    <span class="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 font-mono text-xs">SKU: {{ $product->sku }}</span>
+                    @if($product->model_code)
+                        <span class="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 font-mono text-xs">Model: {{ $product->model_code }}</span>
+                    @endif
                     <span>•</span>
                     <span>Đã tạo: {{ $product->created_at->format('d/m/Y H:i') }}</span>
                 </div>
@@ -122,6 +125,16 @@
                                 <div class="text-gray-600 font-medium mt-1">{{ number_format($product->cost_price, 0, ',', '.') }} ₫</div>
                             </div>
                             @endif
+
+                            @if($product->brand)
+                            <div class="pt-2">
+                                <label class="text-xs text-gray-500 font-semibold uppercase">Thương hiệu</label>
+                                <div class="flex items-center gap-2 mt-1 p-2 border rounded-lg bg-gray-50 w-fit">
+                                    <img src="{{ $product->brand->logo_url }}" class="h-6 w-auto object-contain">
+                                    <span class="font-bold text-gray-900">{{ $product->brand->name }}</span>
+                                </div>
+                            </div>
+                            @endif
                         </div>
 
                         <div class="space-y-4">
@@ -153,6 +166,27 @@
                                 <div class="text-gray-900 mt-1">{{ $product->warranty }}</div>
                             </div>
                             @endif
+
+                            <div class="grid grid-cols-2 gap-4 pt-2 border-t">
+                                @if($product->origin)
+                                <div>
+                                    <label class="text-xs text-gray-500 font-semibold uppercase">Xuất xứ</label>
+                                    <div class="text-gray-900 font-medium">{{ $product->origin }}</div>
+                                </div>
+                                @endif
+                                @if($product->production_year)
+                                <div>
+                                    <label class="text-xs text-gray-500 font-semibold uppercase">Năm sản xuất</label>
+                                    <div class="text-gray-900 font-medium">{{ $product->production_year }}</div>
+                                </div>
+                                @endif
+                                @if($product->condition)
+                                <div class="col-span-2">
+                                    <label class="text-xs text-gray-500 font-semibold uppercase">Tình trạng</label>
+                                    <div class="text-indigo-700 font-bold">{{ $product->condition }}</div>
+                                </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
 

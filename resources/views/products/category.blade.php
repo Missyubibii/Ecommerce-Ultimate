@@ -12,6 +12,8 @@
                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 <span class="font-semibold text-gray-900">{{ $category->name }}</span>
             </nav>
+            
+            <x-brand-slider :brands="$featuredBrands" />
 
             <div class="flex flex-col lg:flex-row gap-8">
 

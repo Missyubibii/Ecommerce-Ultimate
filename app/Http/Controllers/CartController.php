@@ -64,6 +64,14 @@ class CartController extends Controller
                 $request->input('quantity', 1)
             );
 
+            // Log hoạt động
+            $product = \App\Models\Product::find($request->product_id);
+            activity('frontend')
+                ->performedOn($product)
+                ->causedBy(auth()->user())
+                ->withProperties(['quantity' => $request->quantity])
+                ->log('Khách hàng thêm vào giỏ: ' . ($product->name ?? 'Sản phẩm #' . $request->product_id));
+
             // Lấy lại toàn bộ giỏ hàng để cập nhật UI
             $cartData = $this->cartService->getCart($userId, $sessionId);
 

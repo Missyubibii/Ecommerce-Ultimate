@@ -1,168 +1,205 @@
 @extends('layouts.admin')
 
-@section('title', 'Bảng điều khiển')
-@section('header', 'Tổng quan hệ thống')
+@section('title', 'Bảng điều khiển Admin')
 
 @section('content')
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-8 px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen" 
+        x-data="{
+            autoRefresh: localStorage.getItem('admin_auto_refresh') === 'true',
+            countdown: 30,
+            maxCountdown: 30,
+            isRefreshing: false,
+            lastUpdated: '{{ now()->format('H:i:s') }}',
+            filterType: 'default',
+            startDate: '',
+            endDate: '',
+            
+            init() {
+                this.$watch('autoRefresh', value => {
+                    localStorage.setItem('admin_auto_refresh', value);
+                    if (value) this.startTimer();
+                });
+                this.$watch('filterType', () => {
+                    if (this.filterType !== 'custom') {
+                        this.refreshData(true);
+                    }
+                });
+                if (this.autoRefresh) this.startTimer();
+            },
+            
+            startTimer() {
+                let timer = setInterval(() => {
+                    if (!this.autoRefresh) {
+                        clearInterval(timer);
+                        return;
+                    }
+                    if (this.countdown > 0) {
+                        this.countdown--;
+                    } else {
+                        this.refreshData();
+                        this.countdown = this.maxCountdown;
+                    }
+                }, 1000);
+            },
+            
+            async refreshData(isManual = false) {
+                this.isRefreshing = true;
+                try {
+                    let url = `{{ route('admin.dashboard') }}?realtime=1&filter_type=${this.filterType}`;
+                    if (this.filterType === 'custom') {
+                        if (!this.startDate || !this.endDate) {
+                            this.isRefreshing = false;
+                            return; // Yêu cầu nhập đủ ngày
+                        }
+                        url += `&start_date=${this.startDate}&end_date=${this.endDate}`;
+                    }
 
-            {{-- 1. KPI Cards --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Doanh thu -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-indigo-500">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-indigo-100 text-indigo-500">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-gray-600">Tổng doanh thu</p>
-                            <p class="text-lg font-semibold text-gray-700">
-                                {{ number_format($stats['total_revenue'], 0, ',', '.') }}đ</p>
-                        </div>
-                    </div>
-                </div>
+                    const response = await fetch(url, {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        // Dispatch event to components (Stats cards, Charts)
+                        window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: result.data }));
+                        
+                        // Inject HTML for tables
+                        if(result.html) {
+                            if(document.getElementById('recent-orders-container')) 
+                                document.getElementById('recent-orders-container').innerHTML = result.html.recent_orders;
+                            if(document.getElementById('low-stock-container'))
+                                document.getElementById('low-stock-container').innerHTML = result.html.low_stock;
+                            if(document.getElementById('activity-logs-container'))
+                                document.getElementById('activity-logs-container').innerHTML = result.html.activity_logs;
+                        }
 
-                <!-- Đơn hàng mới -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-yellow-500">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-gray-600">Đơn chờ xử lý</p>
-                            <p class="text-lg font-semibold text-gray-700">{{ $stats['pending_orders'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Khách hàng -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-green-500">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-green-100 text-green-500">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-gray-600">Khách hàng</p>
-                            <p class="text-lg font-semibold text-gray-700">{{ $stats['total_customers'] }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sản phẩm sắp hết -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 border-l-4 border-red-500">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-red-100 text-red-500">
-                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-gray-600">Sắp hết hàng</p>
-                            <p class="text-lg font-semibold text-gray-700">{{ $stats['low_stock_products'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- 2. Charts & Recent Orders --}}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <!-- Biểu đồ doanh thu -->
-                <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Biểu đồ doanh thu (7 ngày)</h3>
-                    <div class="relative h-64">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Đơn hàng mới nhất -->
-                <div class="lg:col-span-1 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Đơn hàng mới</h3>
-                        <a href="{{ route('admin.orders.index') }}"
-                            class="text-sm text-indigo-600 hover:text-indigo-900">Xem tất cả &rarr;</a>
-                    </div>
-                    <div class="overflow-y-auto max-h-64">
-                        <ul class="divide-y divide-gray-200">
-                            @foreach($recentOrders as $order)
-                                                <li class="py-3">
-                                                    <div class="flex justify-between">
-                                                        <div>
-                                                            <a href="{{ route('admin.orders.show', $order->id) }}"
-                                                                class="text-sm font-medium text-indigo-600 hover:underline">
-                                                                #{{ $order->order_number }}
-                                                            </a>
-                                                            <p class="text-xs text-gray-500">{{ $order->created_at->diffForHumans() }}</p>
-                                                        </div>
-                                                        <div class="text-right">
-                                                            <p class="text-sm font-bold text-gray-900">
-                                                                {{ number_format($order->total_amount) }}đ</p>
-                                                            <span
-                                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                                                {{ $order->status == 'completed' ? 'bg-green-100 text-green-800' :
-                                ($order->status == 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
-                                                                {{ ucfirst($order->status) }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
+                        this.lastUpdated = result.data.last_updated;
+                        if(isManual) {
+                            window.dispatchEvent(new CustomEvent('notify', { detail: { message: 'Dữ liệu đã được cập nhật!', type: 'success' } }));
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh dashboard:', error);
+                } finally {
+                    this.isRefreshing = false;
+                    if(isManual) this.countdown = this.maxCountdown;
+                }
+            }
+        }">
+        
+        <!-- Header with Actions -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Tổng quan hệ thống</h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-sm text-gray-500">Cập nhật lúc: <span x-text="lastUpdated" class="font-mono font-bold text-indigo-600"></span></span>
+                    <span x-show="isRefreshing" x-cloak class="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>
                 </div>
             </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                {{-- Date Filter --}}
+                <div class="flex items-center gap-2">
+                    <select x-model="filterType" class="text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-8 shadow-sm">
+                        <option value="default">Mặc định (Hôm nay & Tháng)</option>
+                        <option value="1_day">Hôm nay</option>
+                        <option value="7_days">7 ngày qua</option>
+                        <option value="month">Tháng này</option>
+                        <option value="custom">Tùy chọn...</option>
+                    </select>
 
+                    <template x-if="filterType === 'custom'">
+                        <div class="flex items-center gap-2">
+                            <input type="date" x-model="startDate" @change="if(startDate && endDate) refreshData(true)" class="text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 shadow-sm">
+                            <span class="text-gray-500">-</span>
+                            <input type="date" x-model="endDate" @change="if(startDate && endDate) refreshData(true)" class="text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 shadow-sm">
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Auto Refresh Toggle --}}
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <span class="text-xs font-bold text-gray-600">Tự động (30s)</span>
+                    <button @click="autoRefresh = !autoRefresh" 
+                        class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                        :class="autoRefresh ? 'bg-indigo-600' : 'bg-gray-200'">
+                        <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                            :class="autoRefresh ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                </div>
+
+                {{-- Countdown Circle/Progress --}}
+                <div x-show="autoRefresh" x-cloak class="relative flex items-center justify-center w-10 h-10">
+                    <svg class="w-10 h-10 transform -rotate-90">
+                        <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" fill="transparent" class="text-gray-100" />
+                        <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" fill="transparent" class="text-indigo-500 transition-all duration-1000"
+                            :stroke-dasharray="113" :stroke-dashoffset="113 - (113 * countdown / maxCountdown)" />
+                    </svg>
+                    <span class="absolute text-[10px] font-bold text-gray-700" x-text="countdown"></span>
+                </div>
+
+                <button @click="refreshData(true)" :disabled="isRefreshing"
+                    class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50">
+                    <svg class="w-4 h-4" :class="isRefreshing ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                    Làm mới
+                </button>
+                
+                <div class="px-4 py-2 bg-indigo-600 rounded-xl text-sm font-bold text-white shadow-lg shadow-indigo-200">
+                    {{ now()->format('d/m/Y') }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Messages
+        @if(session('success'))
+            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 shadow-sm">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
+                {{ session('success') }}
+            </div>
+        @endif -->
+
+        <!-- KPI Stats Cards -->
+        <x-dashboard.stats-cards :salesStats="$salesStats" :orderStats="$orderStats" :customerStats="$customerStats"
+            :chatStats="$chatStats" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Revenue Chart (2/3) -->
+            <div class="lg:col-span-2">
+                <x-dashboard.revenue-chart :revenueChart="$revenueChart" />
+            </div>
+
+            <!-- Top Products (1/3) -->
+            <div class="lg:col-span-1">
+                <x-dashboard.top-products :topProducts="$topProducts" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Recent Orders (2/3) -->
+            <div class="lg:col-span-2" id="recent-orders-container">
+                <x-dashboard.recent-orders-table :recentOrders="$recentOrders" />
+            </div>
+
+            <!-- Low Stock (1/3) -->
+            <div class="lg:col-span-1" id="low-stock-container">
+                <x-dashboard.low-stock-table :lowStock="$lowStock" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Search Keywords (1/2) -->
+            <x-dashboard.search-keywords :topKeywords="$topKeywords" :searchDays="$searchDays" />
+
+            <!-- Activity Logs (1/2) -->
+            <div id="activity-logs-container">
+                <x-dashboard.activity-logs :activities="$activities" />
+            </div>
         </div>
     </div>
 
-    <!-- Chart.js Script -->
+    <!-- Chart.js and Alpine.js (Optional but good to have) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        const revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: @json($chartData['labels']),
-                datasets: [{
-                    label: 'Doanh thu (VNĐ)',
-                    data: @json($chartData['values']),
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-    </script>
 @endsection

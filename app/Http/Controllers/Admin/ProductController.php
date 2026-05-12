@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Brand;
 use App\Services\ProductService;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
@@ -47,7 +48,8 @@ class ProductController extends Controller implements HasMiddleware
     public function create()
     {
         $categories = $this->categoryService->getAllFlat();
-        return view('admin.products.create', compact('categories'));
+        $brands = Brand::where('is_active', true)->orderBy('sort_order')->get();
+        return view('admin.products.create', compact('categories', 'brands'));
     }
 
     public function store(Request $request)
@@ -57,6 +59,13 @@ class ProductController extends Controller implements HasMiddleware
         $data['is_featured'] = $request->boolean('is_featured');
         $data['special_offer'] = $request->boolean('special_offer');
         $data['online_only'] = $request->boolean('online_only');
+
+        // Map electronics fields
+        $data['brand_id'] = $request->input('brand_id');
+        $data['production_year'] = $request->input('production_year');
+        $data['origin'] = $request->input('origin');
+        $data['condition'] = $request->input('condition');
+        $data['model_code'] = $request->input('model_code');
 
         $product = $this->productService->create($data);
 
@@ -74,7 +83,8 @@ class ProductController extends Controller implements HasMiddleware
     public function edit(Product $product)
     {
         $categories = $this->categoryService->getAllFlat();
-        return view('admin.products.edit', compact('product', 'categories'));
+        $brands = Brand::where('is_active', true)->orderBy('sort_order')->get();
+        return view('admin.products.edit', compact('product', 'categories', 'brands'));
     }
 
     public function update(Request $request, Product $product)
@@ -90,6 +100,13 @@ class ProductController extends Controller implements HasMiddleware
         $data['is_featured'] = $request->boolean('is_featured');
         $data['special_offer'] = $request->boolean('special_offer');
         $data['online_only'] = $request->boolean('online_only');
+
+        // Map electronics fields
+        $data['brand_id'] = $request->input('brand_id');
+        $data['production_year'] = $request->input('production_year');
+        $data['origin'] = $request->input('origin');
+        $data['condition'] = $request->input('condition');
+        $data['model_code'] = $request->input('model_code');
 
         $updated = $this->productService->update($product, $data);
 
@@ -126,6 +143,23 @@ class ProductController extends Controller implements HasMiddleware
             ->with('server_debug', $debug);
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No items selected.'], 400);
+        }
+
+        $count = $this->productService->bulkDelete($ids);
+        $debug = ['module' => 'Product', 'action' => 'BulkDelete', 'count' => $count];
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully deleted {$count} products.",
+            'debug' => $debug
+        ]);
+    }
+
     public function reorderImages(Request $request, Product $product)
     {
         $request->validate(['ids' => 'required|array', 'ids.*' => 'exists:product_images,id']);
@@ -142,6 +176,11 @@ class ProductController extends Controller implements HasMiddleware
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'sku' => 'nullable|string|unique:products,sku,' . $id,
+            'model_code' => 'nullable|string',
+            'brand_id' => 'nullable|string',
+            'production_year' => 'nullable|integer',
+            'origin' => 'nullable|string|max:255',
+            'condition' => 'nullable|string|max:255',
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'specifications' => 'nullable|string',

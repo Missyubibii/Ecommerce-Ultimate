@@ -41,7 +41,13 @@ class User extends Authenticatable implements MustVerifyEmail
             ->logOnly(['name', 'email', 'status', 'phone', 'avatar'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "User has been {$eventName}");
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'Người dùng đã được tạo',
+                'updated' => 'Thông tin người dùng đã được cập nhật',
+                'deleted' => 'Người dùng đã bị xóa',
+                'login'   => 'Đã đăng nhập vào hệ thống',
+                default => "Người dùng {$eventName}"
+            });
     }
 
     public function addresses(): HasMany

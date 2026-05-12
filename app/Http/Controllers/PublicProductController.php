@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ProductService;
 use App\Models\Product;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 
 class PublicProductController extends Controller
@@ -27,7 +28,11 @@ class PublicProductController extends Controller
         // Chuẩn bị dữ liệu response
         $response = [
             'category' => $data['category'],
-            'products' => $data['products']
+            'products' => $data['products'],
+            'featuredBrands' => Brand::where('is_active', true)
+                ->whereJsonContains('display_locations', 'category')
+                ->orderBy('sort_order')
+                ->get()
         ];
 
         // Hybrid Response
@@ -49,6 +54,17 @@ class PublicProductController extends Controller
     {
         $product = $this->productService->findActiveBySlug($slug);
 
+        if (!$product) {
+            abort(404);
+        }
+
+        // Log hoạt động xem sản phẩm
+        activity('frontend')
+            ->performedOn($product)
+            ->causedBy(auth()->user())
+            ->withProperties(['slug' => $slug])
+            ->log('Khách hàng xem sản phẩm: ' . $product->name);
+
         // Format dữ liệu để frontend dễ dùng
         $productData = $product->toArray();
 
@@ -64,7 +80,11 @@ class PublicProductController extends Controller
 
         $response = [
             'product' => $productData,
-            'related' => $relatedProducts
+            'related' => $relatedProducts,
+            'featuredBrands' => Brand::where('is_active', true)
+                ->whereJsonContains('display_locations', 'product_detail')
+                ->orderBy('sort_order')
+                ->get()
         ];
 
         if ($request->wantsJson()) {

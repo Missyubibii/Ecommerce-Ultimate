@@ -19,6 +19,12 @@ class SearchController extends Controller
         // 1. Gọi Service với dữ liệu đã được làm sạch
         $data = $searchService->search($keyword, $filters);
 
+        // Log hoạt động tìm kiếm
+        activity('frontend')
+            ->causedBy(auth()->user())
+            ->withProperties(['keyword' => $keyword, 'results_count' => $data->total()])
+            ->log('Khách hàng tìm kiếm: "' . $keyword . '"');
+
         // Xử lý Zero Result: Nếu không có kết quả, lấy thêm sản phẩm gợi ý
         $suggestedProducts = null;
         if ($data->isEmpty()) {

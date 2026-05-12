@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Brand;
 use App\Models\ProductImage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,8 @@ class ProductService
         'image',
         'image_colors',
         'images_data',      // JSON cấu trúc ảnh (dùng cho update)
-        'deleted_image_ids' // Mảng ID ảnh cần xóa
+        'deleted_image_ids', // Mảng ID ảnh cần xóa
+        'new_brand_logo'     // Logo thương hiệu mới thêm nhanh
     ];
 
     // =========================================================================
@@ -181,6 +183,21 @@ class ProductService
     }
 
     /**
+     * 4b. Xóa nhiều sản phẩm cùng lúc
+     */
+    public function bulkDelete(array $ids): int
+    {
+        $products = Product::whereIn('id', $ids)->get();
+        $count = 0;
+        foreach ($products as $product) {
+            if ($this->delete($product)) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
      * 5. Sắp xếp lại thứ tự ảnh thủ công
      */
     public function reorderImages(Product $product, array $imageIds)
@@ -243,6 +260,7 @@ class ProductService
             ->where('status', 'active')
             ->with([
                 'category',
+                'brand',
                 'images' => function ($q) {
                     $q->orderBy('sort_order', 'asc');
                 }
@@ -313,6 +331,23 @@ class ProductService
         // Tự động tạo SKU nếu để trống (chỉ khi tạo mới)
         if (empty($data['sku']) && !$product) {
             $data['sku'] = 'SKU-' . strtoupper(Str::random(8));
+        }
+
+        // Xử lý tạo nhanh thương hiệu nếu brand_id dạng 'NEW:[Tên thương hiệu]'
+        if (isset($data['brand_id']) && str_starts_with($data['brand_id'], 'NEW:')) {
+            $brandName = str_replace('NEW:', '', $data['brand_id']);
+            $newBrand = Brand::firstOrCreate(
+                ['name' => $brandName],
+                ['slug' => Str::slug($brandName), 'is_active' => true]
+            );
+
+            // Xử lý upload logo cho thương hiệu mới nếu có
+            if (request()->hasFile('new_brand_logo')) {
+                $path = request()->file('new_brand_logo')->store('brands', 'public');
+                $newBrand->update(['logo' => $path]);
+            }
+
+            $data['brand_id'] = $newBrand->id;
         }
 
         // Xử lý thông số kỹ thuật: Lưu vào cột metadata dưới dạng JSON

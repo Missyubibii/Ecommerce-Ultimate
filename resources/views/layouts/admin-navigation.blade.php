@@ -20,19 +20,20 @@
     @php
         $menu = [
             [
-                'name' => 'Đơn hàng',
-                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M14 8H8"></path><path d="M16 12H8"></path><path d="M13 16H8"></path></svg>',
-                'route' => 'admin.orders.index'
-            ],
-            [
                 'name' => 'Dashboard',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>',
                 'route' => 'admin.dashboard'
             ],
             [
+                'name' => 'Đơn hàng',
+                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M14 8H8"></path><path d="M16 12H8"></path><path d="M13 16H8"></path></svg>',
+                'route' => 'admin.orders.index'
+            ],
+            [
                 'name' => 'Người dùng',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
-                'route' => 'admin.users.index'
+                'route' => 'admin.users.index',
+                'roles' => ['admin']
             ],
             [
                 'name' => 'Quảng cáo',
@@ -45,6 +46,11 @@
                 'route' => 'admin.categories.index'
             ],
             [
+                'name' => 'Thương hiệu',
+                'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"></path><path d="M3 22h18"></path><path d="M6 14h12"></path><path d="M9 10h6"></path><path d="M9 6h6"></path><path d="m12 2 3 4H9l3-4Z"></path></svg>',
+                'route' => 'admin.brands.index'
+            ],
+            [
                 'name' => 'Sản phẩm',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>',
                 'route' => 'admin.products.index'
@@ -52,9 +58,9 @@
             [
                 'name' => 'Giỏ hàng',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>',
-                'route' => 'admin.carts.index'
+                'route' => 'admin.carts.index',
+                'roles' => ['admin']
             ],
-
             [
                 'name' => 'Mã giảm giá',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 1 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M9 9h.01"></path><path d="m15 9-6 6"></path><path d="M15 15h.01"></path></svg>',
@@ -66,9 +72,10 @@
                 'route' => 'admin.search_reports.index'
             ],
             [
-                'name' => 'Hoạt động người dùng',
+                'name' => 'Nhật ký hệ thống',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="10"></circle></svg>',
-                'route' => 'admin.activity_logs.index'
+                'route' => 'admin.activity_logs.index',
+                'roles' => ['admin']
             ],
             [
                 'name' => 'Chatbot',
@@ -78,28 +85,33 @@
             [
                 'name' => 'Cài đặt',
                 'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
-                'route' => 'admin.settings.index'
+                'route' => 'admin.settings.index',
+                'roles' => ['admin']
             ],
         ];
     @endphp
 
     <nav class="flex-1 overflow-y-auto mt-4 px-2 space-y-1">
         @foreach ($menu as $item)
-            <a href="{{ route($item['route']) }}" data-turbo="false" class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md
-                                                        {{ request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*')
-            ? 'bg-indigo-50 text-indigo-700'
-            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}
-                                                        transition-colors duration-150"
-                :class="expanded ? '' : 'justify-center'" :title="expanded ? '' : '{{ $item['name'] }}'">
+            @if(!isset($item['roles']) || Auth::user()->hasAnyRole($item['roles']))
+                <a href="{{ route($item['route']) }}" 
+                   class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md
+                          {{ request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*')
+                          ? 'bg-indigo-50 text-indigo-700'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}
+                          transition-colors duration-150"
+                   :class="expanded ? '' : 'justify-center'" 
+                   :title="expanded ? '' : '{{ $item['name'] }}'">
 
-                <div class="flex-shrink-0">{!! $item['icon'] !!}</div>
+                    <div class="flex-shrink-0">{!! $item['icon'] !!}</div>
 
-                <span x-show="expanded" x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-x-2" x-transition:enter-end="opacity-100 translate-x-0"
-                    class="whitespace-nowrap">
-                    {{ $item['name'] }}
-                </span>
-            </a>
+                    <span x-show="expanded" x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 -translate-x-2" x-transition:enter-end="opacity-100 translate-x-0"
+                        class="whitespace-nowrap">
+                        {{ $item['name'] }}
+                    </span>
+                </a>
+            @endif
         @endforeach
     </nav>
 

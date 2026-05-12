@@ -19,9 +19,8 @@ class DatabaseSeeder extends Seeder
         // 1. Reset cache của Spatie Permission để tránh lỗi
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // 2. Tạo Roles (Vai trò) [cite: 193, 421]
-        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
-        $roleCustomer = Role::firstOrCreate(['name' => 'customer']);
+        // 2. Tạo Roles & Permissions qua Seeder
+        $this->call(RolePermissionSeeder::class);
 
         // 3. Tạo tài khoản ADMIN
         $admin = User::firstOrCreate(
@@ -34,7 +33,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $admin->assignRole($roleAdmin);
+        $admin->assignRole('admin');
 
         // 4. Tạo tài khoản CUSTOMER (User thường)
         $customer = User::firstOrCreate(
@@ -47,7 +46,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $customer->assignRole($roleCustomer);
+        $customer->assignRole('customer');
 
         // Optional: Tạo thêm vài user ngẫu nhiên để test phân trang
         // User::factory(10)->create()->each(function ($u) use ($roleCustomer) {

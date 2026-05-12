@@ -6,8 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class Order extends Model
 {
+    use LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'total_amount', 'shipping_address'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'Đơn hàng đã được tạo',
+                'updated' => 'Đơn hàng đã được cập nhật',
+                'deleted' => 'Đơn hàng đã bị xóa',
+                default => "Đơn hàng {$eventName}"
+            });
+    }
     protected $fillable = [
         'order_number',
         'user_id',

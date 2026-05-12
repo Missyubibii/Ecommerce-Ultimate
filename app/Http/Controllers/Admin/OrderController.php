@@ -76,10 +76,31 @@ class OrderController extends Controller
             return response()->json(['success' => true, 'data' => $order, 'debug' => $debug]);
         }
 
+        // Lấy lịch sử hoạt động (Activity Logs)
+        $activities = \Spatie\Activitylog\Models\Activity::where(function($q) use ($order) {
+            $q->where(function($sq) use ($order) {
+                $sq->where('subject_type', Order::class)->where('subject_id', $order->id);
+            });
+            if ($order->payment) {
+                $q->orWhere(function($sq) use ($order) {
+                    $sq->where('subject_type', \App\Models\Payment::class)->where('subject_id', $order->payment->id);
+                });
+            }
+            if ($order->shipment) {
+                $q->orWhere(function($sq) use ($order) {
+                    $sq->where('subject_type', \App\Models\Shipment::class)->where('subject_id', $order->shipment->id);
+                });
+            }
+        })
+        ->with('causer')
+        ->latest()
+        ->get();
+
         //Hiển thị view
         return view('admin.orders.show', [
             'order' => $order,
             'statuses' => $statuses,
+            'activities' => $activities,
             'server_debug' => $debug
         ]);
     }
@@ -124,5 +145,62 @@ class OrderController extends Controller
         );
 
         return back()->with('success', 'Thông tin vận chuyển đã được cập nhật.');
+    }
+
+    /**
+     * Pipeline: Xác nhận đơn hàng
+     */
+    public function approve($id)
+    {
+        try {
+            $this->orderService->approveOrder($id);
+            return back()->with('success', 'Đơn hàng đã được xác nhận.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Pipeline: Giao hàng
+     */
+    public function ship(Request $request, $id)
+    {
+        $request->validate([
+            'carrier' => 'required|string|max:255',
+            'tracking_number' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $this->orderService->shipOrder($id, $request->only(['carrier', 'tracking_number']));
+            return back()->with('success', 'Đơn hàng đã chuyển sang trạng thái đang giao.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Pipeline: Hoàn thành
+     */
+    public function complete($id)
+    {
+        try {
+            $this->orderService->completeOrder($id);
+            return back()->with('success', 'Đơn hàng đã hoàn thành thành công.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Pipeline: Hủy đơn
+     */
+    public function cancel(Request $request, $id)
+    {
+        try {
+            $this->orderService->cancelOrder($id, $request->input('reason'));
+            return back()->with('success', 'Đơn hàng đã được hủy.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

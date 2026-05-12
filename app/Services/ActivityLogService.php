@@ -26,6 +26,11 @@ class ActivityLogService
             $query->where('event', $filters['event']);
         }
 
+        if (!empty($filters['type'])) {
+            $logName = $filters['type'] === 'admin' ? 'default' : 'frontend';
+            $query->where('log_name', $logName);
+        }
+
         return $query->paginate($perPage)->withQueryString();
     }
 

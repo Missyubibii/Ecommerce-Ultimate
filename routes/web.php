@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\SearchReportController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\AdminChatController;
+use App\Http\Controllers\Admin\BrandController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -93,25 +94,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | 3. ADMIN ROUTES (BACKEND PANEL) 
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin'])
+Route::middleware(['auth', 'role:admin|manager'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
 
         // Admin Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard/refresh', [AdminDashboardController::class, 'refresh'])->name('dashboard.refresh');
 
         // Reset User Password
-        Route::patch('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
-        Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
-        Route::resource('users', UserController::class);
+        Route::middleware('role:admin')->group(function() {
+            Route::patch('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
+            Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
+            Route::resource('users', UserController::class);
+        });
 
         // Category Management
         Route::resource('categories', CategoryController::class);
 
         // Product Management
+        Route::post('products/bulk-delete', [ProductController::class, 'bulkDestroy'])->name('products.bulkDelete');
         Route::resource('products', ProductController::class);
         Route::patch('products/{product}/reorder-images', [ProductController::class, 'reorderImages'])->name('products.reorderImages');
+
+        // Brand Management
+        Route::resource('brands', BrandController::class);
 
         // Cart Management
         Route::get('/carts', [AdminCartController::class, 'index'])->name('carts.index');
@@ -122,6 +130,10 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
+        Route::post('/orders/{id}/approve', [OrderController::class, 'approve'])->name('orders.approve');
+        Route::post('/orders/{id}/ship', [OrderController::class, 'ship'])->name('orders.ship');
+        Route::post('/orders/{id}/complete', [OrderController::class, 'complete'])->name('orders.complete');
+        Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
         // Payment Management
         Route::put('/payments/{id}', [OrderController::class, 'updatePayment'])->name('orders.update_payment');
@@ -133,11 +145,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('coupons', CouponController::class);
 
         // Settings Management
-        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::middleware('role:admin')->group(function() {
+            Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+            Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        });
 
         // Activity Logs Management
-        Route::get('/activity_logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
+        Route::get('/activity_logs', [ActivityLogController::class, 'index'])->name('activity_logs.index')->middleware('role:admin');
 
         // Banner Management
         Route::resource('banners', BannerController::class);

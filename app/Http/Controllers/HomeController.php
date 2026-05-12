@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Banner;
+use App\Models\Brand;
 
 class HomeController extends Controller
 {
@@ -72,6 +73,12 @@ class HomeController extends Controller
             ]);
         }
 
-        return view('home', compact('mainBanners', 'ads'));
+        // --- 3. XỬ LÝ THƯƠNG HIỆU QUẢNG CÁO ---
+        $featuredBrands = Brand::where('is_active', true)
+            ->whereJsonContains('display_locations', 'home')
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('home', compact('mainBanners', 'ads', 'featuredBrands'));
     }
 }

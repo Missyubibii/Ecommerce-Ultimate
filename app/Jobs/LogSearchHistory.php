@@ -30,13 +30,9 @@ class LogSearchHistory implements ShouldQueue
         // 1. Ghi log chi tiết
         SearchLog::create($this->logData);
 
-        // 2. Cập nhật bảng tổng hợp (Upsert)
-        SearchTerm::updateOrInsert(
-            ['term' => $this->logData['keyword']],
-            [
-                'hits' => DB::raw('hits + 1'),
-                'last_searched_at' => now()
-            ]
-        );
+        // 2. Cập nhật bảng tổng hợp
+        $term = SearchTerm::firstOrCreate(['term' => $this->logData['keyword']]);
+        $term->increment('hits');
+        $term->update(['last_searched_at' => now()]);
     }
 }

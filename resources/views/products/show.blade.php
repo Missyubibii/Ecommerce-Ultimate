@@ -16,6 +16,8 @@
                 <span class="font-semibold text-gray-800">{{ $product['name'] }}</span>
             </nav>
 
+            <x-brand-slider :brands="$featuredBrands" />
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                 {{-- MAIN CONTENT (Left - 9 Cols) --}}
@@ -77,6 +79,13 @@
                                     <div class="flex items-center gap-4 text-sm text-gray-500">
                                         <span>Mã SP: <span
                                                 class="font-mono text-gray-700 font-medium">{{ $product['sku'] }}</span></span>
+                                        @if(isset($product['brand']))
+                                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                            <span class="flex items-center gap-1">
+                                                Hãng: <span
+                                                    class="text-indigo-600 font-bold underline">{{ $product['brand']['name'] }}</span>
+                                            </span>
+                                        @endif
                                         @if($product['warranty'])
                                             <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
                                             <span>Bảo hành: <span
@@ -169,6 +178,71 @@
                         </h3>
                         <div class="prose prose-indigo max-w-none text-gray-600">
                             {!! nl2br(e($product['description'])) !!}
+                        </div>
+
+                        {{-- Technical Attributes (Electronics Specific) --}}
+                        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-6">
+                            @if(isset($product['brand']))
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div class="w-10 h-10 shrink-0 bg-white rounded border p-1">
+                                        <img src="{{ $product['brand']['logo_url'] ?? '' }}"
+                                            class="w-full h-full object-contain">
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] uppercase font-bold text-gray-400">Thương hiệu</div>
+                                        <div class="text-sm font-bold text-gray-800">{{ $product['brand']['name'] }}</div>
+                                    </div>
+                                </div>
+                            @endif
+                            @if($product['model_code'])
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div
+                                        class="w-10 h-10 shrink-0 bg-white rounded border flex items-center justify-center text-indigo-500">
+                                        <i data-lucide="hash" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] uppercase font-bold text-gray-400">Mã Model</div>
+                                        <div class="text-sm font-bold text-gray-800">{{ $product['model_code'] }}</div>
+                                    </div>
+                                </div>
+                            @endif
+                            @if($product['origin'])
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div
+                                        class="w-10 h-10 shrink-0 bg-white rounded border flex items-center justify-center text-indigo-500">
+                                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] uppercase font-bold text-gray-400">Xuất xứ</div>
+                                        <div class="text-sm font-bold text-gray-800">{{ $product['origin'] }}</div>
+                                    </div>
+                                </div>
+                            @endif
+                            @if($product['production_year'])
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div
+                                        class="w-10 h-10 shrink-0 bg-white rounded border flex items-center justify-center text-indigo-500">
+                                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] uppercase font-bold text-gray-400">Năm sản xuất</div>
+                                        <div class="text-sm font-bold text-gray-800">{{ $product['production_year'] }}</div>
+                                    </div>
+                                </div>
+                            @endif
+                            @if($product['condition'])
+                                <div
+                                    class="col-span-1 sm:col-span-2 flex items-center gap-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                                    <div
+                                        class="w-10 h-10 shrink-0 bg-white rounded border flex items-center justify-center text-indigo-600">
+                                        <i data-lucide="info" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] uppercase font-bold text-indigo-400">Tình trạng máy</div>
+                                        <div class="text-sm font-bold text-indigo-700">{{ $product['condition'] }}</div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
 

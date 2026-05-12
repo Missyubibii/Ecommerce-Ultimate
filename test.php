@@ -1,0 +1,1 @@
+<?php require "vendor/autoload.php"; $app = require_once "bootstrap/app.php"; $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class); $kernel->bootstrap(); $svc = app(App\Services\DashboardService::class); echo json_encode($svc->getSalesStats(now()->subDays(30), now()));

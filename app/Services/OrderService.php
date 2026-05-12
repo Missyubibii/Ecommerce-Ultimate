@@ -235,4 +235,80 @@ class OrderService
             $shipment->order->update(['status' => 'shipped']);
         }
     }
+
+    /**
+     * PIPELINE: Xác nhận đơn hàng
+     */
+    public function approveOrder($id)
+    {
+        $order = Order::findOrFail($id);
+        if ($order->status !== 'pending') {
+            throw new Exception("Chỉ có thể xác nhận đơn hàng đang ở trạng thái Chờ xử lý.");
+        }
+
+        return $this->updateOrderStatus($id, 'processing');
+    }
+
+    /**
+     * PIPELINE: Tiến hành giao hàng
+     */
+    public function shipOrder($id, array $data)
+    {
+        $order = Order::with('shipment')->findOrFail($id);
+        
+        if (!in_array($order->status, ['processing', 'pending'])) {
+            throw new Exception("Đơn hàng không ở trạng thái có thể giao hàng.");
+        }
+
+        if (!$order->shipment) {
+            $order->shipment()->create(['status' => 'pending', 'cost' => 0]);
+            $order->refresh();
+        }
+
+        // Cập nhật thông tin shipment
+        $this->updateShipmentInfo(
+            $order->shipment->id,
+            $data['carrier'] ?? 'N/A',
+            $data['tracking_number'] ?? null,
+            'in_transit'
+        );
+
+        return $this->updateOrderStatus($id, 'shipped');
+    }
+
+    /**
+     * PIPELINE: Hoàn thành đơn hàng
+     */
+    public function completeOrder($id)
+    {
+        $order = Order::with(['payment', 'shipment'])->findOrFail($id);
+
+        if ($order->status === 'completed') {
+            return $order;
+        }
+
+        return $this->updateOrderStatus($id, 'completed');
+    }
+
+    /**
+     * PIPELINE: Hủy đơn hàng
+     */
+    public function cancelOrder($id, $reason = null)
+    {
+        $order = Order::findOrFail($id);
+        
+        if (in_array($order->status, ['completed', 'shipped'])) {
+            throw new Exception("Không thể hủy đơn hàng đã giao hoặc đã hoàn thành.");
+        }
+
+        // Hoàn lại kho (Optional but recommended)
+        foreach($order->items as $item) {
+            $product = Product::find($item->product_id);
+            if($product) {
+                $product->increment('quantity', $item->quantity);
+            }
+        }
+
+        return $this->updateOrderStatus($id, 'cancelled');
+    }
 }
