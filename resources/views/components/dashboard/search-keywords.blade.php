@@ -2,8 +2,8 @@
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-full" 
     x-data="{ 
-        days: {{ $searchDays }},
-        keywords: @json($topKeywords),
+        days: @js($searchDays),
+        keywords: @js($topKeywords),
         loading: false,
         async fetchKeywords(val) {
             this.loading = true;

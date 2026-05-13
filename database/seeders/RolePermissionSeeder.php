@@ -52,7 +52,7 @@ class RolePermissionSeeder extends Seeder
             'manage_chatbot',
         ]);
 
-        // CUSTOMER: Không có quyền admin
-        Role::firstOrCreate(['name' => 'customer']);
+        // USER (Khách hàng): Chỉ truy cập được trang mua sắm
+        Role::firstOrCreate(['name' => 'user']);
     }
 }

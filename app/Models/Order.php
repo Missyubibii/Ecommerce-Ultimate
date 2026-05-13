@@ -67,4 +67,9 @@ class Order extends Model
     {
         return $this->hasOne(Shipment::class);
     }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class, 'coupon_code', 'code');
+    }
 }

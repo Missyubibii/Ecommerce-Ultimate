@@ -5,95 +5,98 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\CouponService;
 use App\Models\Coupon;
+use App\Models\Product;
+use App\Models\Category;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
-    /**
-     * Tạo một instance của CouponService.
-     */
     protected $couponService;
 
-    /**
-     * Tạo một instance của CouponService.
-     */
     public function __construct(CouponService $couponService)
     {
         $this->couponService = $couponService;
     }
 
-    /**
-     * Hiển thị danh sách các mã giảm giá.
-     */
     public function index()
     {
-        // Lấy danh sách các mã giảm giá
         $coupons = $this->couponService->getCoupons();
-
-        // Hiển thị view
         return view('admin.coupons.index', ['coupons' => $coupons]);
     }
 
-    /**
-     * Hiển thị form tạo mã giảm giá.
-     */
     public function create()
     {
-        // Hiển thị view
-        return view('admin.coupons.create');
+        $products = Product::select('id', 'name')->get();
+        $categories = Category::select('id', 'name')->get();
+        $brands = Brand::select('id', 'name')->get();
+
+        return view('admin.coupons.create', compact('products', 'categories', 'brands'));
     }
 
-    /**
-     * Lưu mã giảm giá vào database.
-     */
     public function store(Request $request)
     {
-        //validate
         $request->validate([
             'code' => 'required|unique:coupons,code|max:20',
-            'type' => 'required|in:percent,fixed',
-            'value' => 'required|numeric|min:0',
-            'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'min_order_amount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'expiry_date' => 'nullable|date|after:now',
+            'channel' => 'required|in:email,system,both',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        //lưu coupon vào database
-        $this->couponService->saveCoupon($request->all());
+        $data = $request->all();
+        $data['is_active'] = $request->has('is_active');
+        
+        $this->couponService->saveCoupon($data);
 
         return redirect()->route('admin.coupons.index')->with('success', 'Tạo mã giảm giá thành công');
     }
 
-    /**
-     * Hiển thị form chỉnh sửa mã giảm giá.
-     */
-    public function edit(Coupon $coupon)
+    public function show(Coupon $coupon)
     {
-        return view('admin.coupons.edit', ['coupon' => $coupon]);
+        $coupon->loadCount('orders'); // Giả sử muốn xem đã dùng bao nhiêu lần thực tế qua đơn hàng
+        
+        // Lấy tên các đối tượng áp dụng để hiển thị
+        $selectedProducts = Product::whereIn('id', $coupon->applicable_products ?? [])->get();
+        $selectedCategories = Category::whereIn('id', $coupon->applicable_categories ?? [])->get();
+        $selectedBrands = Brand::whereIn('id', $coupon->applicable_brands ?? [])->get();
+
+        return view('admin.coupons.show', compact('coupon', 'selectedProducts', 'selectedCategories', 'selectedBrands'));
     }
 
-    /**
-     * Cập nhật mã giảm giá trong database.
-     */
+    public function edit(Coupon $coupon)
+    {
+        $products = Product::select('id', 'name')->get();
+        $categories = Category::select('id', 'name')->get();
+        $brands = Brand::select('id', 'name')->get();
+
+        return view('admin.coupons.edit', compact('coupon', 'products', 'categories', 'brands'));
+    }
+
     public function update(Request $request, Coupon $coupon)
     {
-        //validate
         $request->validate([
             'code' => 'required|max:20|unique:coupons,code,' . $coupon->id,
-            'type' => 'required|in:percent,fixed',
-            'value' => 'required|numeric|min:0',
-            'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'min_order_amount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'expiry_date' => 'nullable|date',
+            'channel' => 'required|in:email,system,both',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        //cập nhật coupon
-        $this->couponService->saveCoupon($request->all(), $coupon->id);
+        $data = $request->all();
+        $data['is_active'] = $request->has('is_active');
+
+        $this->couponService->saveCoupon($data, $coupon->id);
 
         return redirect()->route('admin.coupons.index')->with('success', 'Cập nhật thành công');
     }
 
-    /**
-     * Xóa mã giảm giá.
-     */
     public function destroy(Coupon $coupon)
     {
         $coupon->delete();

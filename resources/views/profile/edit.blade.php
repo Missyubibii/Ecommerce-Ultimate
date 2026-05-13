@@ -38,9 +38,8 @@
             <div class="w-full md:w-1/4">
                 <div class="bg-white rounded-xl shadow-sm p-4 sticky top-24">
                     <div class="flex items-center gap-3 mb-6 p-2">
-                        {{-- Avatar hiển thị ở đây --}}
                         @if(Auth::user()->avatar)
-                            <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="w-12 h-12 rounded-full object-cover border border-gray-200">
+                            <img src="{{ str_starts_with(Auth::user()->avatar, 'http') ? Auth::user()->avatar : asset('storage/' . Auth::user()->avatar) }}" class="w-12 h-12 rounded-full object-cover border border-gray-200">
                         @else
                             <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
                                 {{ substr(Auth::user()->name, 0, 1) }}

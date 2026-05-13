@@ -9,22 +9,27 @@ class Coupon extends Model
     protected $fillable = [
         'code',
         'description',
-        'type',
-        'value',
+        'discount_type',
+        'discount_value',
         'min_order_amount',
         'usage_limit',
         'used_count',
-        'starts_at',
-        'ends_at',
-        'is_active'
+        'expiry_date',
+        'is_active',
+        'applicable_products',
+        'applicable_categories',
+        'applicable_brands',
+        'channel'
     ];
 
     protected $casts = [
-        'value' => 'decimal:2',
+        'discount_value' => 'decimal:2',
         'min_order_amount' => 'decimal:2',
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
+        'expiry_date' => 'datetime',
         'is_active' => 'boolean',
+        'applicable_products' => 'array',
+        'applicable_categories' => 'array',
+        'applicable_brands' => 'array',
     ];
 
     /**
@@ -36,8 +41,7 @@ class Coupon extends Model
 
         // Check thời gian
         $now = now();
-        if ($this->starts_at && $now->lt($this->starts_at)) return false;
-        if ($this->ends_at && $now->gt($this->ends_at)) return false;
+        if ($this->expiry_date && $now->gt($this->expiry_date)) return false;
 
         // Check giới hạn sử dụng
         if ($this->usage_limit !== null && $this->used_count >= $this->usage_limit) return false;
@@ -53,12 +57,20 @@ class Coupon extends Model
      */
     public function calculateDiscount($cartTotal)
     {
-        if ($this->type === 'fixed') {
+        if ($this->discount_type === 'fixed') {
             // Giảm cố định, nhưng không vượt quá tổng tiền (tránh âm tiền)
-            return min($this->value, $cartTotal);
-        } elseif ($this->type === 'percent') {
-            return ($cartTotal * $this->value) / 100;
+            return min($this->discount_value, $cartTotal);
+        } elseif ($this->discount_type === 'percent') {
+            return ($cartTotal * $this->discount_value) / 100;
         }
         return 0;
+    }
+
+    /**
+     * Quan hệ với Đơn hàng (thông qua mã coupon)
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'coupon_code', 'code');
     }
 }

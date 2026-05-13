@@ -12,6 +12,13 @@ use App\Models\CartItem;
 use App\Services\CartService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\OrderPlaced;
+use App\Mail\OrderConfirmed;
+use App\Mail\OrderShipped;
+use App\Mail\OrderDelivered;
+use App\Mail\OrderCancelled;
 use Exception;
 
 class OrderService
@@ -114,6 +121,11 @@ class OrderService
 
             return $order;
         });
+
+        // Gửi email thông báo đơn hàng mới
+        $this->sendOrderStatusEmail($order);
+
+        return $order;
     }
 
     // --- Admin & Helper Methods ---
@@ -173,6 +185,9 @@ class OrderService
         $order = Order::findOrFail($id);
         $order->status = $newStatus;
         $order->save();
+
+        // Gửi email thông báo thay đổi trạng thái
+        $this->sendOrderStatusEmail($order);
 
         // Logic tự động (Optional): Nếu đơn hoàn thành -> set payment/shipment completed
         if ($newStatus === 'completed') {
@@ -310,5 +325,32 @@ class OrderService
         }
 
         return $this->updateOrderStatus($id, 'cancelled');
+    }
+
+    /**
+     * Gửi email thông báo trạng thái đơn hàng
+     */
+    protected function sendOrderStatusEmail(Order $order)
+    {
+        try {
+            // Nạp items và user nếu chưa có
+            $order->load(['items.product', 'user']);
+            
+            $mailable = match ($order->status) {
+                'pending'    => new OrderPlaced($order),
+                'processing' => new OrderConfirmed($order),
+                'shipped'    => new OrderShipped($order),
+                'completed'  => new OrderDelivered($order),
+                'cancelled'  => new OrderCancelled($order),
+                default      => null,
+            };
+
+            if ($mailable && $order->user && $order->user->email) {
+                Mail::to($order->user->email)->send($mailable);
+                Log::info("Order status email sent: #{$order->order_number} (Status: {$order->status}) to {$order->user->email}");
+            }
+        } catch (Exception $e) {
+            Log::error("Failed to send order email for #{$order->order_number}: " . $e->getMessage());
+        }
     }
 }

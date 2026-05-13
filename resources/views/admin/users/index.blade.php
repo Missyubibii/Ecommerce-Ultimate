@@ -50,7 +50,12 @@
                         class="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Vai trò --</option>
                         @foreach($roles as $role)
-                            <option value="{{ $role->name }}">{{ ucfirst($role->name) }}</option>
+                            <option value="{{ $role->name }}">
+                                @if($role->name === 'admin') Quản trị viên
+                                @elseif($role->name === 'manager') Quản lý
+                                @else Người dùng
+                                @endif
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -117,7 +122,7 @@
                                 <td class="px-4 py-3">
                                     <div class="flex items-center">
                                         <img class="h-10 w-10 rounded-full object-cover mr-3"
-                                            src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) }}"
+                                            src="{{ $user->avatar ? (str_starts_with($user->avatar, 'http') ? $user->avatar : asset('storage/' . $user->avatar)) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) }}"
                                             alt="">
                                         <div>
                                             <div class="font-medium text-gray-900">{{ $user->name }}</div>
@@ -133,17 +138,20 @@
                                         </span>
                                     @endforeach --}}
                                     @foreach ($user->roles as $role)
-                                        @if ($role->name === 'admin')
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                                                Quản trị viên
-                                            </span>
-                                        @else
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
-                                                Thành viên
-                                            </span>
-                                        @endif
+                                        @php
+                                            $roleClass = 'bg-gray-100 text-gray-800';
+                                            $roleName = 'Người dùng';
+                                            if ($role->name === 'admin') {
+                                                $roleClass = 'bg-blue-100 text-blue-800';
+                                                $roleName = 'Quản trị viên';
+                                            } elseif ($role->name === 'manager') {
+                                                $roleClass = 'bg-purple-100 text-purple-800';
+                                                $roleName = 'Quản lý';
+                                            }
+                                        @endphp
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $roleClass }}">
+                                            {{ $roleName }}
+                                        </span>
                                     @endforeach
                                 </td>
                                 <td class="px-4 py-3">

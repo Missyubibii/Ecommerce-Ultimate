@@ -11,6 +11,9 @@ use App\Models\CartItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Verified;
+use App\Listeners\SendWelcomeEmail;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(Verified::class, SendWelcomeEmail::class);
+
         Paginator::defaultView('vendor.pagination.custom-tailwind');
         Paginator::defaultSimpleView('vendor.pagination.custom-tailwind');
         View::composer(['layouts.app', 'products.index'], CategoryComposer::class);

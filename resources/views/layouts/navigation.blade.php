@@ -302,7 +302,7 @@
                         <button @click="open = !open"
                             class="flex items-center gap-3 pl-1 pr-2 py-1 rounded-full hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200">
                             @if(Auth::user()->avatar)
-                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="Avatar"
+                                <img src="{{ str_starts_with(Auth::user()->avatar, 'http') ? Auth::user()->avatar : asset('storage/' . Auth::user()->avatar) }}" alt="Avatar"
                                     class="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm">
                             @else
                                 <div

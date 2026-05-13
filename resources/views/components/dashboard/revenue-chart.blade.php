@@ -2,7 +2,7 @@
 
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full">
     <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-gray-900">Doanh thu 30 ngày gần nhất</h3>
+        <h3 class="text-lg font-bold text-gray-900">Biểu đồ doanh thu trong kỳ</h3>
         <div class="flex items-center gap-2 text-xs text-gray-500">
             <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
             <span>Doanh thu (VNĐ)</span>
@@ -23,10 +23,10 @@
         const revenueChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: @json($revenueChart['labels']),
+                labels: @js($revenueChart['labels']),
                 datasets: [{
                     label: 'Doanh thu',
-                    data: @json($revenueChart['values']),
+                    data: @js($revenueChart['values']),
                     borderColor: '#6366f1',
                     backgroundColor: gradient,
                     borderWidth: 3,
@@ -66,7 +66,11 @@
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { font: { size: 11 }, color: '#9ca3af' }
+                        ticks: { 
+                            font: { size: 11 }, 
+                            color: '#9ca3af',
+                            maxTicksLimit: 12
+                        }
                     },
                     y: {
                         beginAtZero: true,

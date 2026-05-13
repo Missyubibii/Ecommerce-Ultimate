@@ -59,4 +59,20 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->addresses()->where('is_default', true)->first();
     }
+
+    /**
+     * Gửi email xác nhận tài khoản với giao diện tùy chỉnh
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \App\Notifications\VerifyEmailNotification);
+    }
+
+    /**
+     * Gửi email reset mật khẩu với giao diện tùy chỉnh
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
 }

@@ -10,7 +10,7 @@
             maxCountdown: 30,
             isRefreshing: false,
             lastUpdated: '{{ now()->format('H:i:s') }}',
-            filterType: 'default',
+            filterType: '30_days',
             startDate: '',
             endDate: '',
             
@@ -100,10 +100,9 @@
                 {{-- Date Filter --}}
                 <div class="flex items-center gap-2">
                     <select x-model="filterType" class="text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-8 shadow-sm">
-                        <option value="default">Mặc định (Hôm nay & Tháng)</option>
                         <option value="1_day">Hôm nay</option>
                         <option value="7_days">7 ngày qua</option>
-                        <option value="month">Tháng này</option>
+                        <option value="30_days">30 ngày qua</option>
                         <option value="custom">Tùy chọn...</option>
                     </select>
 
@@ -163,7 +162,7 @@
 
         <!-- KPI Stats Cards -->
         <x-dashboard.stats-cards :salesStats="$salesStats" :orderStats="$orderStats" :customerStats="$customerStats"
-            :chatStats="$chatStats" />
+            :chatStats="$chatStats" :lowStockCount="$lowStockCount" />
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <!-- Revenue Chart (2/3) -->
@@ -202,4 +201,11 @@
 
     <!-- Chart.js and Alpine.js (Optional but good to have) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global helper for formatting currency
+        window.formatCurrency = function(val) {
+            if (val === null || val === undefined || isNaN(val)) return '0đ';
+            return new Intl.NumberFormat('vi-VN').format(val) + 'đ';
+        };
+    </script>
 @endsection

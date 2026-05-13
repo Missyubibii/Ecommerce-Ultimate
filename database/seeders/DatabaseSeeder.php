@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $customer->assignRole('customer');
+        $customer->assignRole('user');
 
         // Optional: Tạo thêm vài user ngẫu nhiên để test phân trang
         // User::factory(10)->create()->each(function ($u) use ($roleCustomer) {

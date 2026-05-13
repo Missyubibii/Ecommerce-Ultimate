@@ -54,20 +54,20 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-gray-900">
-                                    {{ $coupon->type == 'percent' ? 'Theo %' : 'Số tiền cố định' }}
+                                    {{ $coupon->discount_type == 'percent' ? 'Theo %' : 'Số tiền cố định' }}
                                 </td>
                                 <td class="px-6 py-4 font-bold text-green-600">
-                                    {{ $coupon->type == 'percent' ? $coupon->value . '%' : number_format($coupon->value) . 'đ' }}
+                                    {{ $coupon->discount_type == 'percent' ? $coupon->discount_value . '%' : number_format($coupon->discount_value) . 'đ' }}
                                 </td>
                                 <td class="px-6 py-4 text-center text-gray-600">
                                     {{ $coupon->used_count }} / {{ $coupon->usage_limit ?? '∞' }}
                                 </td>
                                 <td class="px-6 py-4 text-xs text-gray-500">
-                                    @if($coupon->ends_at)
-                                        <div class="{{ now()->gt($coupon->ends_at) ? 'text-red-500 font-bold' : '' }}">
-                                            {{ $coupon->ends_at->format('d/m/Y') }}
+                                    @if($coupon->expiry_date)
+                                        <div class="{{ now()->gt($coupon->expiry_date) ? 'text-red-500 font-bold' : '' }}">
+                                            {{ $coupon->expiry_date->format('d/m/Y') }}
                                         </div>
-                                        @if(now()->gt($coupon->ends_at)) <span>(Hết hạn)</span> @endif
+                                        @if(now()->gt($coupon->expiry_date)) <span>(Hết hạn)</span> @endif
                                     @else
                                         <span class="text-gray-400 italic">Không thời hạn</span>
                                     @endif
@@ -78,7 +78,9 @@
                                         {{ $coupon->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right space-x-2">
+                                <td class="px-6 py-4 text-right space-x-3">
+                                    <a href="{{ route('admin.coupons.show', $coupon->id) }}"
+                                        class="text-indigo-600 hover:text-indigo-900 font-bold text-xs uppercase">Chi tiết</a>
                                     <a href="{{ route('admin.coupons.edit', $coupon->id) }}"
                                         class="text-blue-600 hover:text-blue-900 font-medium text-xs uppercase">Sửa</a>
                                     <form action="{{ route('admin.coupons.destroy', $coupon->id) }}" method="POST"

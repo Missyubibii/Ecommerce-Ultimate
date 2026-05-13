@@ -121,7 +121,7 @@ class OrderController extends Controller
         }
 
         return redirect()->route('admin.orders.show', $id)
-            ->with('success', 'Trạng thái đơn hàng đã được cập nhật.')
+            ->with('success', 'Trạng thái đơn hàng đã được cập nhật. Đã gửi email thông báo cho khách hàng.')
             ->with('server_debug', $debug);
     }
 
@@ -154,7 +154,7 @@ class OrderController extends Controller
     {
         try {
             $this->orderService->approveOrder($id);
-            return back()->with('success', 'Đơn hàng đã được xác nhận.');
+            return back()->with('success', 'Đơn hàng đã được xác nhận. Đã gửi email thông báo cho khách hàng.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -172,7 +172,7 @@ class OrderController extends Controller
 
         try {
             $this->orderService->shipOrder($id, $request->only(['carrier', 'tracking_number']));
-            return back()->with('success', 'Đơn hàng đã chuyển sang trạng thái đang giao.');
+            return back()->with('success', 'Đơn hàng đã chuyển sang trạng thái đang giao. Đã gửi email thông báo cho khách hàng.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -185,7 +185,7 @@ class OrderController extends Controller
     {
         try {
             $this->orderService->completeOrder($id);
-            return back()->with('success', 'Đơn hàng đã hoàn thành thành công.');
+            return back()->with('success', 'Đơn hàng đã hoàn thành thành công. Đã gửi email thông báo cho khách hàng.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -198,7 +198,7 @@ class OrderController extends Controller
     {
         try {
             $this->orderService->cancelOrder($id, $request->input('reason'));
-            return back()->with('success', 'Đơn hàng đã được hủy.');
+            return back()->with('success', 'Đơn hàng đã được hủy. Đã gửi email thông báo cho khách hàng.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

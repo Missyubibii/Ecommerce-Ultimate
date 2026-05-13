@@ -91,6 +91,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| 2.1 GOOGLE SOCIAL LOGIN ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback']);
+
+/*
+|--------------------------------------------------------------------------
 | 3. ADMIN ROUTES (BACKEND PANEL) 
 |--------------------------------------------------------------------------
 */
@@ -158,7 +166,7 @@ Route::middleware(['auth', 'role:admin|manager'])
 
         // Search Reports Management
         // Search Reports Management
-        Route::get('/search-reports', [SearchReportController::class, 'index'])->name('search_reports.index');
+        Route::get('/search-reports', [SearchReportController::class, 'index'])->name('search_reports.index')->middleware('role:admin');
 
         // Chat History
         Route::get('/chat-history', [AdminChatController::class, 'index'])->name('chat.index');
@@ -166,3 +174,17 @@ Route::middleware(['auth', 'role:admin|manager'])
     });
 
 require __DIR__ . '/auth.php';
+
+// Route test email
+Route::get('/test-email', function () {
+    try {
+        \Illuminate\Support\Facades\Mail::raw('Đây là email test từ Laravel Ecommerce Ultimate! Gửi lúc: ' . now(), function ($message) {
+            $message->to('d.khanh9c@gmail.com')
+                    ->subject('Test SMTP - Ecommerce Ultimate');
+        });
+        
+        return '✅ Email đã được gửi thành công! Vui lòng kiểm tra hộp thư.';
+    } catch (\Exception $e) {
+        return '❌ LỖI: ' . $e->getMessage();
+    }
+});

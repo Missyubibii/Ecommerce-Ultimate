@@ -22,8 +22,7 @@ class DashboardController extends Controller
     {
         $searchDays = $request->get('search_days', 7);
 
-        // Date Filter Logic
-        $filterType = $request->get('filter_type', 'default');
+        $filterType = $request->get('filter_type', '30_days');
         $startDate = null;
         $endDate = null;
 
@@ -35,8 +34,8 @@ class DashboardController extends Controller
         } elseif ($filterType === '7_days') {
             $startDate = $now->copy()->subDays(6);
             $endDate = $now->copy();
-        } elseif ($filterType === 'month') {
-            $startDate = $now->copy()->startOfMonth();
+        } elseif ($filterType === '30_days') {
+            $startDate = $now->copy()->subDays(29);
             $endDate = $now->copy();
         } elseif ($filterType === 'custom' && $request->has('start_date') && $request->has('end_date')) {
             $startDate = \Carbon\Carbon::parse($request->get('start_date'), 'Asia/Ho_Chi_Minh');
@@ -51,22 +50,23 @@ class DashboardController extends Controller
             ]);
         }
 
-        // Nếu là yêu cầu realtime, xóa cache trước khi lấy dữ liệu
+        // Nếu là yêu cầu realtime, không clear cache nữa, tự dùng TTL 5 phút
         if ($request->has('realtime') || $request->has('filter_type')) {
-            $this->dashboardService->clearCache();
+            // $this->dashboardService->clearCache();
         }
 
         // Thu thập dữ liệu từ service
         $data = [
             'salesStats'     => $this->dashboardService->getSalesStats($startDate, $endDate),
             'orderStats'     => $this->dashboardService->getOrderStats($startDate, $endDate),
-            'revenueChart'   => $this->dashboardService->getRevenueChartData(30),
-            'topProducts'    => $this->dashboardService->getTopProducts(15),
+            'revenueChart'   => $this->dashboardService->getRevenueChartData($startDate, $endDate),
+            'topProducts'    => $this->dashboardService->getTopProducts($startDate, $endDate, 5),
             'recentOrders'   => $this->dashboardService->getRecentOrders(20),
             'lowStock'       => $this->dashboardService->getLowStockProducts(15),
+            'lowStockCount'  => $this->dashboardService->getLowStockCount(),
             'topKeywords'    => $this->dashboardService->getTopSearchKeywords($searchDays, 20),
             'searchDays'     => $searchDays,
-            'customerStats'  => $this->dashboardService->getCustomerStats(), // keeping original
+            'customerStats'  => $this->dashboardService->getCustomerStats($startDate, $endDate),
             'chatStats'      => $this->dashboardService->getChatStats($startDate, $endDate),
             'activities'     => $this->dashboardService->getRecentActivities(20),
             'last_updated'   => now()->format('H:i:s'),
@@ -83,6 +83,9 @@ class DashboardController extends Controller
                 ]
             ]);
         }
+
+        // DEBUG: Uncomment the line below to verify backend data
+        // dd($data);
 
         return view('admin.dashboard', $data);
     }

@@ -83,10 +83,14 @@
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open"
                                 class="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                                    {{ substr(Auth::user()->name, 0, 1) }}
-                                </div>
+                                @if(Auth::user()->avatar)
+                                    <img src="{{ str_starts_with(Auth::user()->avatar, 'http') ? Auth::user()->avatar : asset('storage/' . Auth::user()->avatar) }}" 
+                                        alt="Avatar" class="w-8 h-8 rounded-full object-cover ring-1 ring-gray-200">
+                                @else
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                                        {{ substr(Auth::user()->name, 0, 1) }}
+                                    </div>
+                                @endif
                                 <span class="hidden md:block">{{ Auth::user()->name }}</span>
                                 <i data-lucide="chevron-down" class="w-4 h-4"></i>
                             </button>

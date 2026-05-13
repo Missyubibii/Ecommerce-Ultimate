@@ -3,7 +3,7 @@
         <div class="relative group">
             {{-- Avatar hiện tại --}}
             @if(Auth::user()->avatar)
-                <img id="avatar-preview-main" src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="Avatar"
+                <img id="avatar-preview-main" src="{{ str_starts_with(Auth::user()->avatar, 'http') ? Auth::user()->avatar : asset('storage/' . Auth::user()->avatar) }}" alt="Avatar"
                     class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
             @else
                 <div id="avatar-placeholder-main"
